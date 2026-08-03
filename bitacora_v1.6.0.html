@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Bitácora</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #11131A;
+    --surface: #181B23;
+    --surface-2: #20242E;
+    --ink: #EDEFF3;
+    --ink-soft: #868C9A;
+    --ink-faint: #565C69;
+    --line: #262B36;
+    --accent: #4C7EF3;
+    --accent-dim: #2B4A8C;
+    --red: #E5555A;
+    --green: #3FCB8C;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .shell { display: flex; min-height: 100vh; }
+
+  /* ── Sidebar ─────────────────────────────────────────────── */
+  .sidebar {
+    width: 232px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--line);
+    padding: 24px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .brand {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: -0.01em;
+    padding: 0 10px 22px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .brand .dot { width: 8px; height: 8px; border-radius: 2px; background: var(--accent); }
+  .nav-section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+    padding: 14px 10px 6px;
+  }
+  .nav-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    color: var(--ink-soft);
+    border: none;
+    border-radius: 6px;
+    padding: 9px 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .nav-item:hover { background: var(--surface-2); color: var(--ink); }
+  .nav-item.active { background: var(--accent-dim); color: #fff; }
+  .nav-sub { padding: 2px 0 6px 14px; display: flex; flex-direction: column; gap: 1px; }
+  .nav-sub-item {
+    display: block; width: 100%; text-align: left;
+    background: transparent; border: none; border-left: 2px solid var(--line);
+    color: var(--ink-soft); padding: 7px 10px; border-radius: 0 6px 6px 0;
+    font-family: 'Inter', sans-serif; font-size: 12.5px; cursor: pointer;
+  }
+  .nav-sub-item:hover { background: var(--surface-2); color: var(--ink); }
+  .nav-sub-item.active { border-left-color: var(--accent); color: var(--accent); font-weight: 600; background: var(--surface-2); }
+
+  /* ── Layout principal ────────────────────────────────────── */
+  .main { flex: 1; min-width: 0; }
+  .topbar-mobile { display: none; }
+  .content { max-width: 760px; margin: 0 auto; padding: 40px 32px 80px; }
+  .page-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 22px;
+    margin: 0 0 4px;
+  }
+  .page-sub { color: var(--ink-soft); font-size: 13px; margin: 0 0 24px; }
+
+  /* ── Login ───────────────────────────────────────────────── */
+  .login-shell { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .login-card {
+    width: 100%; max-width: 340px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 32px;
+  }
+  .login-card h1 { font-family: 'Space Grotesk', sans-serif; font-size: 19px; margin: 0 0 4px; }
+  .login-card p { color: var(--ink-soft); font-size: 13px; margin: 0 0 22px; }
+
+  /* ── Controles ───────────────────────────────────────────── */
+  input, select, textarea {
+    width: 100%;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface-2);
+    color: var(--ink);
+  }
+  input::placeholder { color: var(--ink-faint); }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  button {
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 6px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+  }
+  button:hover { background: #5D8BF5; }
+  button.ghost { background: transparent; color: var(--ink-soft); border: 1px solid var(--line); }
+  button.ghost:hover { color: var(--ink); border-color: var(--ink-faint); }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .error-msg { color: var(--red); font-size: 13px; margin-top: 12px; }
+
+  /* ── Formularios de módulo ───────────────────────────────── */
+  .entry-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 22px;
+    padding: 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  .entry-form .full { grid-column: 1 / -1; }
+  .entry-form button { grid-column: 1 / -1; }
+  .entry-form label.checkbox-field { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-soft); }
+  .entry-form label.checkbox-field input { width: auto; }
+
+  /* ── Listado de entradas ─────────────────────────────────── */
+  .log { display: flex; flex-direction: column; gap: 8px; }
+  .entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 15px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .entry.done { opacity: 0.5; }
+  .entry-main { flex: 1; }
+  .entry-title { font-size: 14px; font-weight: 500; }
+  .entry-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft); margin-top: 3px; }
+  .entry-amount { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; }
+  .entry-amount.gasto { color: var(--red); }
+  .entry-amount.ingreso { color: var(--green); }
+  .entry-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .entry-actions button { padding: 5px 9px; font-size: 11px; }
+  .empty { color: var(--ink-faint); font-size: 13px; padding: 24px 0; text-align: center; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .footer { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-faint); text-align: center; margin-top: 48px; }
+
+  /* ── Dashboard ───────────────────────────────────────────── */
+  .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .dash-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+  .dash-card.full { grid-column: 1 / -1; }
+  .dash-label { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: 8px; }
+  .dash-value { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 600; }
+  .dash-row { display: flex; justify-content: space-between; padding: 7px 0; border-top: 1px solid var(--line); font-size: 13px; }
+  .dash-row:first-of-type { border-top: none; }
+
+  /* ── Kanban ──────────────────────────────────────────────── */
+  .kanban-toolbar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+  .kanban-toolbar select { width: auto; min-width: 180px; }
+  .kanban-board { display: flex; gap: 12px; margin-bottom: 8px; }
+  .kanban-col { flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+  .kanban-col.drag-over { border-color: var(--accent); }
+  .kanban-col-header {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--ink-faint); padding: 4px 6px 10px;
+  }
+  .kanban-col-count { background: var(--surface-2); border-radius: 10px; padding: 1px 7px; }
+  .kanban-cards { display: flex; flex-direction: column; gap: 8px; min-height: 40px; }
+  .kanban-card {
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px;
+    padding: 10px 12px; cursor: grab; font-size: 13px;
+  }
+  .kanban-card:active { cursor: grabbing; }
+  .kanban-card-title { font-weight: 500; margin-bottom: 5px; }
+  .kanban-card-meta { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+  .chip {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 2px 7px;
+    border-radius: 4px; background: var(--surface); color: var(--ink-soft); border: 1px solid var(--line);
+  }
+  .chip.prioridad-alta { color: var(--red); border-color: var(--red); }
+  .kanban-card-actions { display: flex; gap: 4px; margin-top: 8px; }
+  .kanban-card-actions button { font-size: 10px; padding: 4px 7px; }
+
+  /* ── Barra de progreso ───────────────────────────────────── */
+  .progress-bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; margin: 6px 0 2px; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 3px; }
+
+  /* ── Resumen de Productividad ────────────────────────────── */
+  .resumen-section { margin-bottom: 32px; }
+  .resumen-section h3 {
+    font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 600;
+    margin: 0 0 12px; display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .resumen-section h3 a { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--accent); cursor: pointer; font-weight: 500; }
+  .meta-row { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
+  .meta-row-top { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+  .meta-row-top .meta-title { font-weight: 500; cursor: pointer; }
+  .hitos-list { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+  .hito-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .hito-row input[type="checkbox"] { width: auto; }
+  .hito-row.completado span.hito-title { text-decoration: line-through; color: var(--ink-faint); }
+  .hito-title { flex: 1; }
+  .hito-add { display: flex; gap: 6px; margin-top: 8px; }
+  .hito-add input { flex: 1; }
+  .hito-add button { padding: 8px 12px; font-size: 12px; }
+
+  /* ── Responsive: sidebar se convierte en menú deslizante ────── */
+  @media (max-width: 780px) {
+    .sidebar {
+      position: fixed; top: 0; left: 0; height: 100%; z-index: 40;
+      transform: translateX(-100%);
+      transition: transform 0.2s ease;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 30;
+    }
+    .topbar-mobile {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 20px; border-bottom: 1px solid var(--line);
+    }
+    .menu-btn {
+      background: var(--surface); border: 1px solid var(--line); color: var(--ink);
+      padding: 7px 11px; border-radius: 6px;
+    }
+    .content { padding: 28px 20px 80px; }
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .entry-form { grid-template-columns: 1fr; }
+    .kanban-board { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect } = React;
+
+// EDITA ESTA LÍNEA con la URL /exec de tu Apps Script
+const API_URL = 'PEGA_AQUI_TU_URL_DE_APPS_SCRIPT';
+const FRONTEND_VERSION = 'v1.6.0';
+
+const CATEGORIAS_TAREAS = ['Trabajo', 'Personal', 'Hogar', 'Salud', 'Finanzas', 'Ocio', 'Estudio', 'Otro'];
+
+function apiCall(action, extra) {
+  const token = localStorage.getItem('bitacora_token');
+  return fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify(Object.assign({ action, token }, extra)),
+  }).then(r => r.json());
+}
+
+function f(name, label, type, options) {
+  return { name, label, type: type || 'text', options };
+}
+
+const MODULES_GENERIC = [
+  { key: 'Deudas', label: 'Deudas', group: 'Finanzas', fields: [
+    f('acreedor', 'Acreedor'), f('monto_total', 'Monto total', 'number'), f('tasa_interes', 'Tasa interés %', 'number'),
+    f('cuota_mensual', 'Cuota mensual', 'number'), f('fecha_inicio', 'Fecha inicio', 'date'),
+    f('fecha_proximo_pago', 'Próximo pago', 'date'), f('estado', 'Estado', 'select', ['activa', 'pagada']),
+  ]},
+  { key: 'Pagos_Deudas', label: 'Pagos de deudas', group: 'Finanzas', fields: [
+    f('deuda_id', 'ID de deuda'), f('fecha', 'Fecha', 'date'), f('monto', 'Monto', 'number'), f('nota', 'Nota'),
+  ]},
+  { key: 'Suscripciones', label: 'Suscripciones', group: 'Finanzas', fields: [
+    f('nombre', 'Nombre'), f('categoria', 'Categoría'), f('monto', 'Monto', 'number'),
+    f('frecuencia', 'Frecuencia', 'select', ['mensual', 'anual']), f('fecha_proximo_cobro', 'Próximo cobro', 'date'),
+    f('metodo_pago', 'Método de pago'), f('estado', 'Estado', 'select', ['activa', 'cancelada']),
+  ]},
+  { key: 'Patrimonio_Snapshot', label: 'Patrimonio neto', group: 'Finanzas', fields: [
+    f('fecha', 'Fecha', 'date'), f('total_bolsa', 'Total bolsa', 'number'), f('total_ahorros', 'Total ahorros', 'number'),
+    f('total_deudas', 'Total deudas', 'number'), f('patrimonio_neto', 'Patrimonio neto', 'number'), f('nota', 'Nota'),
+  ]},
+  { key: 'Facturas_Servicios', label: 'Facturas de servicios', group: 'Finanzas', fields: [
+    f('servicio', 'Servicio'), f('fecha', 'Fecha', 'date'), f('monto', 'Monto', 'number'),
+    f('consumo', 'Consumo', 'number'), f('unidad_consumo', 'Unidad'), f('proveedor', 'Proveedor'),
+  ]},
+  { key: 'Impuestos', label: 'Impuestos', group: 'Finanzas', fields: [
+    f('anio_fiscal', 'Año fiscal'), f('tipo', 'Tipo'), f('fecha_limite', 'Fecha límite', 'date'),
+    f('estado', 'Estado', 'select', ['pendiente', 'presentado']), f('nota', 'Nota'),
+  ]},
+  { key: 'Vehiculos', label: 'Vehículos', group: 'Vehículos', fields: [
+    f('nombre', 'Nombre'), f('marca', 'Marca'), f('modelo', 'Modelo'), f('anio', 'Año', 'number'),
+    f('matricula', 'Matrícula'), f('kilometraje_actual', 'Kilometraje actual', 'number'),
+    f('fecha_ultima_revision', 'Última revisión', 'date'),
+  ]},
+  { key: 'Mantenimiento_Vehiculos', label: 'Mantenimiento', group: 'Vehículos', fields: [
+    f('vehiculo_id', 'ID vehículo'), f('tipo', 'Tipo'), f('fecha', 'Fecha', 'date'),
+    f('kilometraje', 'Kilometraje', 'number'), f('costo', 'Costo', 'number'),
+    f('proximo_vencimiento', 'Próximo vencimiento', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Bolsa_Posiciones', label: 'Posiciones', group: 'Bolsa', fields: [
+    f('ticker', 'Ticker'), f('nombre', 'Nombre'), f('cantidad', 'Cantidad', 'number'),
+    f('precio_promedio_compra', 'Precio promedio', 'number'), f('moneda', 'Moneda'), f('cuenta_broker', 'Cuenta broker'),
+  ]},
+  { key: 'Bolsa_Movimientos', label: 'Movimientos', group: 'Bolsa', fields: [
+    f('ticker', 'Ticker'), f('fecha', 'Fecha', 'date'), f('tipo', 'Tipo', 'select', ['compra', 'venta', 'dividendo']),
+    f('cantidad', 'Cantidad', 'number'), f('precio', 'Precio', 'number'), f('comision', 'Comisión', 'number'), f('nota', 'Nota'),
+  ]},
+  { key: 'Inventario_Hogar', label: 'Inventario', group: 'Hogar', fields: [
+    f('item', 'Ítem'), f('categoria', 'Categoría'), f('fecha_compra', 'Fecha de compra', 'date'),
+    f('precio', 'Precio', 'number'), f('garantia_hasta', 'Garantía hasta', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Mantenimiento_Hogar', label: 'Mantenimiento', group: 'Hogar', fields: [
+    f('sistema', 'Sistema'), f('tipo', 'Tipo'), f('fecha', 'Fecha', 'date'), f('costo', 'Costo', 'number'),
+    f('proximo_vencimiento', 'Próximo vencimiento', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Seguros', label: 'Seguros', group: 'Hogar', fields: [
+    f('tipo', 'Tipo', 'select', ['hogar', 'auto', 'salud', 'vida']), f('aseguradora', 'Aseguradora'),
+    f('poliza_numero', 'Número de póliza'), f('fecha_inicio', 'Fecha inicio', 'date'),
+    f('fecha_vencimiento', 'Vencimiento', 'date'), f('prima', 'Prima', 'number'), f('cobertura_nota', 'Cobertura'),
+  ]},
+  { key: 'Deporte', label: 'Deporte', group: 'Salud', fields: [
+    f('fecha', 'Fecha', 'date'), f('tipo_actividad', 'Actividad'), f('duracion_min', 'Duración (min)', 'number'),
+    f('distancia_km', 'Distancia (km)', 'number'), f('calorias', 'Calorías', 'number'), f('nota', 'Nota'),
+  ]},
+  { key: 'Salud', label: 'Salud', group: 'Salud', fields: [
+    f('fecha', 'Fecha', 'date'), f('tipo', 'Tipo', 'select', ['cita', 'vacuna', 'medicamento', 'analisis']),
+    f('descripcion', 'Descripción'), f('proximo_vencimiento', 'Próximo vencimiento', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Mascotas', label: 'Mascotas', group: 'Salud', fields: [
+    f('nombre', 'Nombre'), f('especie', 'Especie'), f('fecha_nacimiento', 'Fecha de nacimiento', 'date'),
+    f('veterinario', 'Veterinario'), f('proxima_vacuna', 'Próxima vacuna', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Documentos_Personales', label: 'Documentos', group: 'Documentos', fields: [
+    f('tipo', 'Tipo'), f('numero', 'Número'), f('fecha_emision', 'Emisión', 'date'),
+    f('fecha_vencimiento', 'Vencimiento', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Aprendizaje', label: 'Aprendizaje', group: 'Productividad', fields: [
+    f('titulo', 'Título'), f('autor', 'Fuente / autor'), f('tipo', 'Tipo', 'select', ['libro', 'curso', 'tutorial', 'certificacion', 'habilidad', 'otro']),
+    f('estado', 'Estado', 'select', ['pendiente', 'en_curso', 'terminado']), f('fecha_inicio', 'Fecha inicio', 'date'),
+    f('fecha_fin', 'Fecha fin', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Mercado', label: 'Mercado', group: 'Ocio', fields: [
+    f('item', 'Ítem'), f('categoria', 'Categoría'), f('cantidad', 'Cantidad', 'number'), f('unidad', 'Unidad'),
+    f('comprado', 'Comprado', 'checkbox'), f('fecha', 'Fecha', 'date'), f('recurrente', 'Recurrente', 'checkbox'),
+  ]},
+  { key: 'Comidas', label: 'Comidas', group: 'Ocio', fields: [
+    f('fecha', 'Fecha', 'date'), f('tipo_comida', 'Tipo de comida', 'select', ['desayuno', 'almuerzo', 'cena']),
+    f('receta', 'Receta'), f('ingredientes_nota', 'Ingredientes'),
+  ]},
+  { key: 'Regalos', label: 'Regalos', group: 'Ocio', fields: [
+    f('persona', 'Persona'), f('ocasion', 'Ocasión'), f('fecha', 'Fecha', 'date'), f('idea', 'Idea'),
+    f('presupuesto', 'Presupuesto', 'number'), f('comprado', 'Comprado', 'checkbox'),
+  ]},
+  { key: 'Viajes', label: 'Viajes', group: 'Ocio', fields: [
+    f('destino', 'Destino'), f('fecha_inicio', 'Fecha inicio', 'date'), f('fecha_fin', 'Fecha fin', 'date'),
+    f('presupuesto', 'Presupuesto', 'number'), f('estado', 'Estado', 'select', ['planeado', 'confirmado', 'realizado']), f('nota', 'Nota'),
+  ]},
+  { key: 'Contactos', label: 'Contactos', group: 'Ocio', fields: [
+    f('nombre', 'Nombre'), f('relacion', 'Relación'), f('cumpleanos', 'Cumpleaños', 'date'),
+    f('ultima_interaccion', 'Última interacción', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Config', label: 'Configuración', group: 'Sistema', fields: [
+    f('clave', 'Clave'), f('valor', 'Valor'), f('categoria', 'Categoría'),
+  ]},
+];
+
+const NAV = [
+  { key: 'ProductividadResumen', label: 'Resumen', group: 'Productividad' },
+  { key: 'Tareas', label: 'Tareas', group: 'Productividad' },
+  { key: 'Metas', label: 'Metas', group: 'Productividad' },
+  { key: 'Transacciones', label: 'Transacciones', group: 'Finanzas' },
+  ...MODULES_GENERIC.map(m => ({ key: m.key, label: m.label, group: m.group })),
+];
+
+const TOP_CATEGORIES = ['Dashboard', 'Productividad', 'Finanzas', 'Vehículos', 'Bolsa', 'Hogar', 'Salud', 'Documentos', 'Ocio', 'Sistema'];
+
+function modulesForCategory(cat) {
+  return NAV.filter(m => m.group === cat);
+}
+
+function Login({ onLogin }) {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  function submit(e) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'login', password }) })
+      .then(r => r.json())
+      .then(res => {
+        setLoading(false);
+        if (res.token) {
+          localStorage.setItem('bitacora_token', res.token);
+          onLogin();
+        } else if (res.error === 'locked') {
+          setError(`Bloqueado. Intenta en ${res.minutesLeft} min.`);
+        } else {
+          setError('Contraseña incorrecta.');
+        }
+      })
+      .catch(() => { setLoading(false); setError('No se pudo conectar.'); });
+  }
+
+  return (
+    <div className="login-shell">
+      <div className="login-card">
+        <h1>Bitácora</h1>
+        <p>Acceso privado</p>
+        <form onSubmit={submit}>
+          <input type="password" placeholder="Contraseña" value={password}
+            onChange={e => setPassword(e.target.value)} autoFocus />
+          <div style={{ height: 12 }} />
+          <button type="submit" disabled={loading} style={{ width: '100%' }}>{loading ? 'Entrando...' : 'Entrar'}</button>
+        </form>
+        {error && <div className="error-msg">{error}</div>}
+      </div>
+    </div>
+  );
+}
+
+function Dashboard() {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    Promise.all([
+      apiCall('list', { sheet: 'Tareas' }),
+      apiCall('list', { sheet: 'Transacciones' }),
+      apiCall('list', { sheet: 'Deudas' }),
+      apiCall('list', { sheet: 'Suscripciones' }),
+    ]).then(([tareas, transacciones, deudas, suscripciones]) => {
+      setData({ tareas: tareas || [], transacciones: transacciones || [], deudas: deudas || [], suscripciones: suscripciones || [] });
+    });
+  }, []);
+
+  if (!data) return <div className="empty">Cargando…</div>;
+
+  const pendientes = data.tareas.filter(t => t.estado !== 'hecha');
+  const balance = data.transacciones.reduce((acc, it) => {
+    const m = parseFloat(it.monto) || 0;
+    return acc + (it.tipo === 'ingreso' ? m : -m);
+  }, 0);
+  const proximosPagos = [
+    ...data.deudas.filter(d => d.fecha_proximo_pago).map(d => ({ label: d.acreedor, fecha: d.fecha_proximo_pago })),
+    ...data.suscripciones.filter(s => s.fecha_proximo_cobro).map(s => ({ label: s.nombre, fecha: s.fecha_proximo_cobro })),
+  ].sort((a, b) => new Date(a.fecha) - new Date(b.fecha)).slice(0, 4);
+
+  return (
+    <div className="dashboard-grid">
+      <div className="dash-card">
+        <div className="dash-label">Tareas pendientes</div>
+        <div className="dash-value">{pendientes.length}</div>
+      </div>
+      <div className="dash-card">
+        <div className="dash-label">Balance registrado</div>
+        <div className="dash-value" style={{ color: balance >= 0 ? 'var(--green)' : 'var(--red)' }}>
+          {balance.toFixed(2)} €
+        </div>
+      </div>
+      <div className="dash-card full">
+        <div className="dash-label">Próximos pagos</div>
+        {proximosPagos.length === 0 ? <div className="empty">Nada próximo.</div> :
+          proximosPagos.map((p, i) => (
+            <div key={i} className="dash-row"><span>{p.label}</span><span className="entry-meta">{p.fecha}</span></div>
+          ))
+        }
+      </div>
+      <div className="dash-card full">
+        <div className="dash-label">Próximas tareas</div>
+        {pendientes.length === 0 ? <div className="empty">Sin tareas pendientes.</div> :
+          pendientes.slice(0, 4).map(t => (
+            <div key={t.id} className="dash-row"><span>{t.titulo}</span><span className="entry-meta">{t.fecha_limite || ''}</span></div>
+          ))
+        }
+      </div>
+    </div>
+  );
+}
+
+const KANBAN_COLUMNS = [
+  { key: 'pendiente', label: 'Pendiente' },
+  { key: 'en_curso', label: 'En curso' },
+  { key: 'hecha', label: 'Hecho' },
+];
+
+function TareasTab({ compact }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ titulo: '', categoria: '', proyecto: '', prioridad: 'media', fecha_limite: '' });
+  const [filtroProyecto, setFiltroProyecto] = useState('');
+  const [dragOverCol, setDragOverCol] = useState(null);
+
+  function load() {
+    setLoading(true);
+    apiCall('list', { sheet: 'Tareas' }).then(res => { setItems(res || []); setLoading(false); });
+  }
+  useEffect(load, []);
+
+  function addTarea(e) {
+    e.preventDefault();
+    if (!form.titulo) return;
+    apiCall('create', { sheet: 'Tareas', data: { ...form, estado: 'pendiente' } }).then(() => {
+      setForm({ titulo: '', categoria: '', proyecto: '', prioridad: 'media', fecha_limite: '' });
+      load();
+    });
+  }
+
+  function moveTask(id, nuevoEstado) {
+    apiCall('update', { sheet: 'Tareas', data: { id, estado: nuevoEstado } }).then(load);
+  }
+
+  function remove(id) { apiCall('delete', { sheet: 'Tareas', id }).then(load); }
+
+  const proyectos = [...new Set(items.map(it => it.proyecto).filter(Boolean))];
+  const visibles = filtroProyecto ? items.filter(it => it.proyecto === filtroProyecto) : items;
+  const maxPorColumna = compact ? 3 : Infinity;
+
+  if (loading) return <div className="empty">Cargando…</div>;
+
+  return (
+    <div>
+      {!compact && (
+        <React.Fragment>
+          <form className="entry-form" onSubmit={addTarea}>
+            <input className="full" placeholder="Título de la tarea" value={form.titulo}
+              onChange={e => setForm({ ...form, titulo: e.target.value })} />
+            <input list="proyectos-list" placeholder="Proyecto (opcional)" value={form.proyecto}
+              onChange={e => setForm({ ...form, proyecto: e.target.value })} />
+            <datalist id="proyectos-list">
+              {proyectos.map(p => <option key={p} value={p} />)}
+            </datalist>
+            <select value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })}>
+              <option value="">Sin categoría</option>
+              {CATEGORIAS_TAREAS.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select value={form.prioridad} onChange={e => setForm({ ...form, prioridad: e.target.value })}>
+              <option value="baja">Prioridad baja</option>
+              <option value="media">Prioridad media</option>
+              <option value="alta">Prioridad alta</option>
+            </select>
+            <input type="date" value={form.fecha_limite} onChange={e => setForm({ ...form, fecha_limite: e.target.value })} />
+            <button type="submit">Añadir tarea</button>
+          </form>
+
+          {proyectos.length > 0 && (
+            <div className="kanban-toolbar">
+              <select value={filtroProyecto} onChange={e => setFiltroProyecto(e.target.value)}>
+                <option value="">Todos los proyectos</option>
+                {proyectos.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+          )}
+        </React.Fragment>
+      )}
+
+      <div className="kanban-board">
+        {KANBAN_COLUMNS.map(col => {
+          const cardsAll = visibles.filter(it => (it.estado || 'pendiente') === col.key);
+          const cards = cardsAll.slice(0, maxPorColumna);
+          return (
+            <div key={col.key}
+              className={`kanban-col ${dragOverCol === col.key ? 'drag-over' : ''}`}
+              onDragOver={e => { e.preventDefault(); setDragOverCol(col.key); }}
+              onDragLeave={() => setDragOverCol(null)}
+              onDrop={e => {
+                e.preventDefault();
+                const id = e.dataTransfer.getData('text/plain');
+                setDragOverCol(null);
+                if (id) moveTask(id, col.key);
+              }}>
+              <div className="kanban-col-header">
+                <span>{col.label}</span>
+                <span className="kanban-col-count">{cardsAll.length}</span>
+              </div>
+              <div className="kanban-cards">
+                {cards.map(it => (
+                  <div key={it.id} className="kanban-card" draggable
+                    onDragStart={e => e.dataTransfer.setData('text/plain', it.id)}>
+                    <div className="kanban-card-title">{it.titulo}</div>
+                    <div className="kanban-card-meta">
+                      {it.proyecto && <span className="chip">{it.proyecto}</span>}
+                      {it.prioridad && <span className={`chip ${it.prioridad === 'alta' ? 'prioridad-alta' : ''}`}>{it.prioridad}</span>}
+                      {it.fecha_limite && <span className="chip">{it.fecha_limite}</span>}
+                    </div>
+                    {!compact && (
+                      <div className="kanban-card-actions">
+                        {KANBAN_COLUMNS.filter(c => c.key !== col.key).map(c => (
+                          <button key={c.key} className="ghost" onClick={() => moveTask(it.id, c.key)}>→ {c.label}</button>
+                        ))}
+                        <button className="ghost" onClick={() => remove(it.id)}>Borrar</button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {cardsAll.length === 0 && <div className="empty" style={{ padding: '10px 0' }}>Vacío</div>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function MetasTab() {
+  const [metas, setMetas] = useState([]);
+  const [hitos, setHitos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState(null);
+  const [form, setForm] = useState({ titulo: '', categoria: '', fecha_objetivo: '', nota: '' });
+  const [hitoForm, setHitoForm] = useState({});
+
+  function load() {
+    setLoading(true);
+    Promise.all([
+      apiCall('list', { sheet: 'Metas' }),
+      apiCall('list', { sheet: 'Hitos_Metas' }),
+    ]).then(([m, h]) => { setMetas(m || []); setHitos(h || []); setLoading(false); });
+  }
+  useEffect(load, []);
+
+  function addMeta(e) {
+    e.preventDefault();
+    if (!form.titulo) return;
+    apiCall('create', { sheet: 'Metas', data: { ...form, estado: 'en_curso', progreso_pct: 0 } }).then(() => {
+      setForm({ titulo: '', categoria: '', fecha_objetivo: '', nota: '' });
+      load();
+    });
+  }
+
+  function removeMeta(id) { apiCall('delete', { sheet: 'Metas', id }).then(load); }
+
+  function hitosDe(metaId) { return hitos.filter(h => h.meta_id === metaId); }
+
+  function progresoDe(metaId, meta) {
+    const propios = hitosDe(metaId);
+    if (propios.length === 0) return parseFloat(meta.progreso_pct) || 0;
+    const completados = propios.filter(h => h.completado === true || h.completado === 'true').length;
+    return Math.round((completados / propios.length) * 100);
+  }
+
+  function addHito(metaId) {
+    const titulo = (hitoForm[metaId] || {}).titulo;
+    if (!titulo) return;
+    const fecha = (hitoForm[metaId] || {}).fecha_objetivo || '';
+    apiCall('create', { sheet: 'Hitos_Metas', data: { meta_id: metaId, titulo, fecha_objetivo: fecha, completado: false } }).then(() => {
+      setHitoForm({ ...hitoForm, [metaId]: { titulo: '', fecha_objetivo: '' } });
+      load();
+    });
+  }
+
+  function toggleHito(hito) {
+    apiCall('update', { sheet: 'Hitos_Metas', data: { id: hito.id, completado: !(hito.completado === true || hito.completado === 'true') } }).then(load);
+  }
+
+  function removeHito(id) { apiCall('delete', { sheet: 'Hitos_Metas', id }).then(load); }
+
+  return (
+    <div>
+      <form className="entry-form" onSubmit={addMeta}>
+        <input className="full" placeholder="Título de la meta" value={form.titulo}
+          onChange={e => setForm({ ...form, titulo: e.target.value })} />
+        <input placeholder="Categoría" value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })} />
+        <input type="date" value={form.fecha_objetivo} onChange={e => setForm({ ...form, fecha_objetivo: e.target.value })} />
+        <input className="full" placeholder="Nota (opcional)" value={form.nota} onChange={e => setForm({ ...form, nota: e.target.value })} />
+        <button type="submit">Añadir meta</button>
+      </form>
+
+      {loading ? <div className="empty">Cargando…</div> :
+        metas.length === 0 ? <div className="empty">Sin metas registradas.</div> :
+        metas.map(m => {
+          const isOpen = expandedId === m.id;
+          const propios = hitosDe(m.id);
+          const progreso = progresoDe(m.id, m);
+          return (
+            <div key={m.id} className="meta-row">
+              <div className="meta-row-top">
+                <span className="meta-title" onClick={() => setExpandedId(isOpen ? null : m.id)}>
+                  {isOpen ? '▾' : '▸'} {m.titulo}
+                </span>
+                <span className="entry-meta">{progreso}% {propios.length > 0 && `· ${propios.filter(h => h.completado === true || h.completado === 'true').length}/${propios.length} hitos`}</span>
+              </div>
+              <div className="progress-bar"><div className="progress-fill" style={{ width: `${Math.min(100, progreso)}%` }}></div></div>
+
+              {isOpen && (
+                <div className="hitos-list">
+                  {propios.length === 0 && <div className="empty" style={{ padding: '4px 0' }}>Sin hitos todavía.</div>}
+                  {propios.map(h => (
+                    <div key={h.id} className={`hito-row ${(h.completado === true || h.completado === 'true') ? 'completado' : ''}`}>
+                      <input type="checkbox" checked={h.completado === true || h.completado === 'true'} onChange={() => toggleHito(h)} />
+                      <span className="hito-title">{h.titulo}</span>
+                      {h.fecha_objetivo && <span className="entry-meta">{h.fecha_objetivo}</span>}
+                      <button className="ghost" onClick={() => removeHito(h.id)}>Borrar</button>
+                    </div>
+                  ))}
+                  <div className="hito-add">
+                    <input placeholder="Nuevo hito" value={(hitoForm[m.id] || {}).titulo || ''}
+                      onChange={e => setHitoForm({ ...hitoForm, [m.id]: { ...(hitoForm[m.id] || {}), titulo: e.target.value } })} />
+                    <input type="date" style={{ maxWidth: 140 }} value={(hitoForm[m.id] || {}).fecha_objetivo || ''}
+                      onChange={e => setHitoForm({ ...hitoForm, [m.id]: { ...(hitoForm[m.id] || {}), fecha_objetivo: e.target.value } })} />
+                    <button onClick={() => addHito(m.id)}>Añadir</button>
+                  </div>
+                  <div style={{ textAlign: 'right', marginTop: 6 }}>
+                    <button className="ghost" onClick={() => removeMeta(m.id)}>Borrar meta</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })
+      }
+    </div>
+  );
+}
+
+function TransaccionesTab() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ tipo: 'gasto', categoria: '', monto: '', cuenta: '', nota: '' });
+
+  function load() {
+    setLoading(true);
+    apiCall('list', { sheet: 'Transacciones' }).then(res => { setItems(res || []); setLoading(false); });
+  }
+  useEffect(load, []);
+
+  function addTransaccion(e) {
+    e.preventDefault();
+    if (!form.monto) return;
+    apiCall('create', { sheet: 'Transacciones', data: { ...form, fecha: new Date().toISOString().slice(0, 10) } }).then(() => {
+      setForm({ tipo: 'gasto', categoria: '', monto: '', cuenta: '', nota: '' });
+      load();
+    });
+  }
+
+  function remove(id) { apiCall('delete', { sheet: 'Transacciones', id }).then(load); }
+
+  const balance = items.reduce((acc, it) => {
+    const monto = parseFloat(it.monto) || 0;
+    return acc + (it.tipo === 'ingreso' ? monto : -monto);
+  }, 0);
+
+  return (
+    <div>
+      <div className="topbar">
+        <span className="entry-meta">Balance registrado</span>
+        <span className="entry-amount" style={{ color: balance >= 0 ? 'var(--green)' : 'var(--red)' }}>{balance.toFixed(2)} €</span>
+      </div>
+      <form className="entry-form" onSubmit={addTransaccion}>
+        <select value={form.tipo} onChange={e => setForm({ ...form, tipo: e.target.value })}>
+          <option value="gasto">Gasto</option>
+          <option value="ingreso">Ingreso</option>
+        </select>
+        <input type="number" step="0.01" placeholder="Monto" value={form.monto} onChange={e => setForm({ ...form, monto: e.target.value })} />
+        <input placeholder="Categoría" value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })} />
+        <input placeholder="Cuenta" value={form.cuenta} onChange={e => setForm({ ...form, cuenta: e.target.value })} />
+        <input className="full" placeholder="Nota (opcional)" value={form.nota} onChange={e => setForm({ ...form, nota: e.target.value })} />
+        <button type="submit">Añadir movimiento</button>
+      </form>
+      {loading ? <div className="empty">Cargando…</div> :
+        items.length === 0 ? <div className="empty">No hay movimientos registrados.</div> :
+        <div className="log">
+          {items.map((it, i) => (
+            <div key={it.id} className="entry">
+              <div className="entry-main">
+                <div className="entry-title">{it.categoria || it.nota || 'Sin categoría'}</div>
+                <div className="entry-meta">{it.fecha} · {it.cuenta || 'sin cuenta'}</div>
+              </div>
+              <span className={`entry-amount ${it.tipo}`}>{it.tipo === 'gasto' ? '-' : '+'}{parseFloat(it.monto || 0).toFixed(2)} €</span>
+              <div className="entry-actions">
+                <button className="ghost" onClick={() => remove(it.id)}>Borrar</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      }
+    </div>
+  );
+}
+
+function ProductividadResumen({ onNavigate }) {
+  const [metas, setMetas] = useState(null);
+  const [hitos, setHitos] = useState([]);
+  const [aprendizaje, setAprendizaje] = useState(null);
+
+  useEffect(() => {
+    apiCall('list', { sheet: 'Metas' }).then(res => setMetas(res || []));
+    apiCall('list', { sheet: 'Hitos_Metas' }).then(res => setHitos(res || []));
+    apiCall('list', { sheet: 'Aprendizaje' }).then(res => setAprendizaje(res || []));
+  }, []);
+
+  function progresoDe(meta) {
+    const propios = hitos.filter(h => h.meta_id === meta.id);
+    if (propios.length === 0) return parseFloat(meta.progreso_pct) || 0;
+    const completados = propios.filter(h => h.completado === true || h.completado === 'true').length;
+    return Math.round((completados / propios.length) * 100);
+  }
+
+  return (
+    <div>
+      <div className="resumen-section">
+        <h3>Tareas <a onClick={() => onNavigate('Tareas')}>ver tablero completo →</a></h3>
+        <TareasTab compact />
+      </div>
+
+      <div className="resumen-section">
+        <h3>Metas <a onClick={() => onNavigate('Metas')}>ver todas →</a></h3>
+        {!metas ? <div className="empty">Cargando…</div> :
+          metas.length === 0 ? <div className="empty">Sin metas registradas.</div> :
+          metas.slice(0, 4).map(m => (
+            <div key={m.id} className="meta-row">
+              <div className="meta-row-top"><span>{m.titulo}</span><span className="entry-meta">{progresoDe(m)}%</span></div>
+              <div className="progress-bar"><div className="progress-fill" style={{ width: `${Math.min(100, progresoDe(m))}%` }}></div></div>
+            </div>
+          ))
+        }
+      </div>
+
+      <div className="resumen-section">
+        <h3>Aprendizaje <a onClick={() => onNavigate('Aprendizaje')}>ver todo →</a></h3>
+        {!aprendizaje ? <div className="empty">Cargando…</div> :
+          aprendizaje.filter(l => l.estado === 'en_curso').length === 0 ? <div className="empty">Nada en curso ahora.</div> :
+          aprendizaje.filter(l => l.estado === 'en_curso').map(l => (
+            <div key={l.id} className="dash-row"><span>{l.titulo}</span><span className="entry-meta">{l.autor || ''}</span></div>
+          ))
+        }
+      </div>
+    </div>
+  );
+}
+
+function GenericTab({ config }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  function emptyForm() {
+    const obj = {};
+    config.fields.forEach(field => { obj[field.name] = field.type === 'checkbox' ? false : ''; });
+    return obj;
+  }
+  const [form, setForm] = useState(emptyForm());
+
+  function load() {
+    setLoading(true);
+    apiCall('list', { sheet: config.key }).then(res => { setItems(res || []); setLoading(false); });
+  }
+  useEffect(load, [config.key]);
+
+  function add(e) {
+    e.preventDefault();
+    apiCall('create', { sheet: config.key, data: form }).then(() => { setForm(emptyForm()); load(); });
+  }
+
+  function remove(id) { apiCall('delete', { sheet: config.key, id }).then(load); }
+
+  function renderField(field) {
+    const value = form[field.name];
+    const onChange = e => setForm({ ...form, [field.name]: e.target.value });
+    if (field.type === 'select') {
+      return (
+        <select key={field.name} value={value} onChange={onChange}>
+          <option value="">{field.label}</option>
+          {field.options.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+      );
+    }
+    if (field.type === 'checkbox') {
+      return (
+        <label key={field.name} className="checkbox-field">
+          <input type="checkbox" checked={!!value} onChange={e => setForm({ ...form, [field.name]: e.target.checked })} />
+          {field.label}
+        </label>
+      );
+    }
+    return (
+      <input key={field.name} type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
+        step={field.type === 'number' ? '0.01' : undefined}
+        placeholder={field.label} value={value} onChange={onChange} />
+    );
+  }
+
+  return (
+    <div>
+      <form className="entry-form" onSubmit={add}>
+        {config.fields.map(renderField)}
+        <button type="submit">Añadir</button>
+      </form>
+      {loading ? <div className="empty">Cargando…</div> :
+        items.length === 0 ? <div className="empty">Sin registros.</div> :
+        <div className="log">
+          {items.map((it, i) => (
+            <div key={it.id || i} className="entry">
+              <div className="entry-main">
+                <div className="entry-title">{it[config.fields[0].name] || '(sin título)'}</div>
+                <div className="entry-meta">{config.fields.slice(1, 4).map(fld => it[fld.name]).filter(Boolean).join(' · ')}</div>
+                {it.progreso_pct !== undefined && it.progreso_pct !== '' && (
+                  <div className="progress-bar"><div className="progress-fill" style={{ width: `${Math.min(100, parseFloat(it.progreso_pct) || 0)}%` }}></div></div>
+                )}
+              </div>
+              <div className="entry-actions">
+                <button className="ghost" onClick={() => remove(it.id)}>Borrar</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      }
+    </div>
+  );
+}
+
+function App() {
+  const [authed, setAuthed] = useState(!!localStorage.getItem('bitacora_token'));
+  const [category, setCategory] = useState('Dashboard');
+  const [currentModule, setCurrentModule] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  if (!authed) return <Login onLogin={() => setAuthed(true)} />;
+
+  function selectCategory(cat) {
+    setCategory(cat);
+    if (cat === 'Dashboard') {
+      setCurrentModule(null);
+    } else {
+      const mods = modulesForCategory(cat);
+      setCurrentModule(mods.length ? mods[0].key : null);
+    }
+    setSidebarOpen(false);
+  }
+
+  const categoryModules = modulesForCategory(category);
+  const genericConfig = MODULES_GENERIC.find(m => m.key === currentModule);
+  const activeLabel = currentModule ? (NAV.find(m => m.key === currentModule) || {}).label : category;
+
+  return (
+    <div className="shell">
+      {sidebarOpen && <div className="backdrop" onClick={() => setSidebarOpen(false)} />}
+
+      <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="brand"><span className="dot"></span>Bitácora</div>
+        {TOP_CATEGORIES.map(cat => {
+          const mods = modulesForCategory(cat);
+          const isExpanded = category === cat;
+          return (
+            <div key={cat}>
+              <button className={`nav-item ${isExpanded ? 'active' : ''}`} onClick={() => selectCategory(cat)}>
+                {cat}
+              </button>
+              {isExpanded && mods.length > 0 && (
+                <div className="nav-sub">
+                  {mods.map(m => (
+                    <button key={m.key} className={`nav-sub-item ${currentModule === m.key ? 'active' : ''}`}
+                      onClick={() => { setCurrentModule(m.key); setSidebarOpen(false); }}>
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="main">
+        <div className="topbar-mobile">
+          <button className="menu-btn" onClick={() => setSidebarOpen(true)}>☰</button>
+          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600 }}>Bitácora</span>
+        </div>
+
+        <div className="content">
+          <div className="page-title">{category === 'Dashboard' ? 'Dashboard' : activeLabel}</div>
+          <div className="page-sub">
+            {category === 'Dashboard' ? 'Resumen general' : category}
+          </div>
+
+          {category === 'Dashboard' ? <Dashboard /> :
+            currentModule === 'ProductividadResumen' ? <ProductividadResumen onNavigate={setCurrentModule} /> :
+            currentModule === 'Tareas' ? <TareasTab /> :
+            currentModule === 'Metas' ? <MetasTab /> :
+            currentModule === 'Transacciones' ? <TransaccionesTab /> :
+            genericConfig ? <GenericTab config={genericConfig} /> : null}
+
+          <div className="footer">Bitácora {FRONTEND_VERSION}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
