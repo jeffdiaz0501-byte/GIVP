@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Bitácora</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EDEEE9;
+    --surface: #F7F7F3;
+    --ink: #1B1F1D;
+    --ink-soft: #5B5F58;
+    --line: #D8D9D0;
+    --teal: #1F5F5B;
+    --teal-dark: #133F3C;
+    --ochre: #C97D2A;
+    --red: #B4432E;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
+  .brand {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .brand small {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-weight: 400;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 24px;
+  }
+  .login-card { max-width: 360px; margin: 80px auto 0; }
+  .login-card h1 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 16px;
+    margin: 0 0 4px;
+  }
+  .login-card p { color: var(--ink-soft); font-size: 13px; margin: 0 0 20px; }
+  input, select, textarea {
+    width: 100%;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: #fff;
+    color: var(--ink);
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: 2px solid var(--teal);
+    outline-offset: -1px;
+  }
+  button {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 16px;
+    border-radius: 3px;
+    border: none;
+    background: var(--teal);
+    color: #fff;
+    cursor: pointer;
+  }
+  button:hover { background: var(--teal-dark); }
+  button.ghost { background: transparent; color: var(--ink-soft); border: 1px solid var(--line); }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .error-msg { color: var(--red); font-size: 13px; margin-top: 10px; }
+  .module-nav {
+    margin-bottom: 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 500;
+    font-size: 13px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .entry-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+  .entry-form .full { grid-column: 1 / -1; }
+  .entry-form button { grid-column: 1 / -1; }
+  .entry-form label.checkbox-field {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--ink-soft);
+  }
+  .entry-form label.checkbox-field input { width: auto; }
+  .log { display: flex; flex-direction: column; gap: 8px; }
+  .entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--teal);
+    border-radius: 3px;
+  }
+  .entry.done { border-left-color: var(--line); opacity: 0.55; }
+  .entry.gasto { border-left-color: var(--red); }
+  .entry.ingreso { border-left-color: var(--teal); }
+  .entry-main { flex: 1; }
+  .entry-title { font-size: 14px; font-weight: 500; }
+  .entry-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 3px;
+  }
+  .entry-amount {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .entry-actions { display: flex; gap: 6px; }
+  .entry-actions button { padding: 5px 9px; font-size: 11px; }
+  .empty { color: var(--ink-soft); font-size: 13px; padding: 20px 0; text-align: center; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .logbook-no {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    min-width: 34px;
+  }
+  .footer {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    text-align: center;
+    margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect } = React;
+
+// EDITA ESTA LÍNEA con la URL /exec de tu Apps Script
+const API_URL = 'PEGA_AQUI_TU_URL_DE_APPS_SCRIPT';
+const FRONTEND_VERSION = 'v1.1.0';
+
+const CATEGORIAS_TAREAS = ['Trabajo', 'Personal', 'Hogar', 'Salud', 'Finanzas', 'Ocio', 'Estudio', 'Otro'];
+
+function apiCall(action, extra) {
+  const token = localStorage.getItem('bitacora_token');
+  return fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify(Object.assign({ action, token }, extra)),
+  }).then(r => r.json());
+}
+
+// ── Configuración de módulos genéricos (25 de las 27 pestañas; Tareas y
+//    Transacciones tienen componentes propios más abajo) ───────────────────
+
+function f(name, label, type, options) {
+  return { name, label, type: type || 'text', options };
+}
+
+const MODULES_GENERIC = [
+  { key: 'Deudas', label: 'Deudas', group: 'Finanzas', fields: [
+    f('acreedor', 'Acreedor'), f('monto_total', 'Monto total', 'number'), f('tasa_interes', 'Tasa interés %', 'number'),
+    f('cuota_mensual', 'Cuota mensual', 'number'), f('fecha_inicio', 'Fecha inicio', 'date'),
+    f('fecha_proximo_pago', 'Próximo pago', 'date'), f('estado', 'Estado', 'select', ['activa', 'pagada']),
+  ]},
+  { key: 'Pagos_Deudas', label: 'Pagos de deudas', group: 'Finanzas', fields: [
+    f('deuda_id', 'ID de deuda'), f('fecha', 'Fecha', 'date'), f('monto', 'Monto', 'number'), f('nota', 'Nota'),
+  ]},
+  { key: 'Suscripciones', label: 'Suscripciones', group: 'Finanzas', fields: [
+    f('nombre', 'Nombre'), f('categoria', 'Categoría'), f('monto', 'Monto', 'number'),
+    f('frecuencia', 'Frecuencia', 'select', ['mensual', 'anual']), f('fecha_proximo_cobro', 'Próximo cobro', 'date'),
+    f('metodo_pago', 'Método de pago'), f('estado', 'Estado', 'select', ['activa', 'cancelada']),
+  ]},
+  { key: 'Patrimonio_Snapshot', label: 'Patrimonio neto', group: 'Finanzas', fields: [
+    f('fecha', 'Fecha', 'date'), f('total_bolsa', 'Total bolsa', 'number'), f('total_ahorros', 'Total ahorros', 'number'),
+    f('total_deudas', 'Total deudas', 'number'), f('patrimonio_neto', 'Patrimonio neto', 'number'), f('nota', 'Nota'),
+  ]},
+  { key: 'Facturas_Servicios', label: 'Facturas de servicios', group: 'Finanzas', fields: [
+    f('servicio', 'Servicio'), f('fecha', 'Fecha', 'date'), f('monto', 'Monto', 'number'),
+    f('consumo', 'Consumo', 'number'), f('unidad_consumo', 'Unidad'), f('proveedor', 'Proveedor'),
+  ]},
+  { key: 'Impuestos', label: 'Impuestos', group: 'Finanzas', fields: [
+    f('anio_fiscal', 'Año fiscal'), f('tipo', 'Tipo'), f('fecha_limite', 'Fecha límite', 'date'),
+    f('estado', 'Estado', 'select', ['pendiente', 'presentado']), f('nota', 'Nota'),
+  ]},
+  { key: 'Vehiculos', label: 'Vehículos', group: 'Vehículos', fields: [
+    f('nombre', 'Nombre'), f('marca', 'Marca'), f('modelo', 'Modelo'), f('anio', 'Año', 'number'),
+    f('matricula', 'Matrícula'), f('kilometraje_actual', 'Kilometraje actual', 'number'),
+    f('fecha_ultima_revision', 'Última revisión', 'date'),
+  ]},
+  { key: 'Mantenimiento_Vehiculos', label: 'Mantenimiento vehículos', group: 'Vehículos', fields: [
+    f('vehiculo_id', 'ID vehículo'), f('tipo', 'Tipo'), f('fecha', 'Fecha', 'date'),
+    f('kilometraje', 'Kilometraje', 'number'), f('costo', 'Costo', 'number'),
+    f('proximo_vencimiento', 'Próximo vencimiento', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Bolsa_Posiciones', label: 'Bolsa: posiciones', group: 'Bolsa', fields: [
+    f('ticker', 'Ticker'), f('nombre', 'Nombre'), f('cantidad', 'Cantidad', 'number'),
+    f('precio_promedio_compra', 'Precio promedio', 'number'), f('moneda', 'Moneda'), f('cuenta_broker', 'Cuenta broker'),
+  ]},
+  { key: 'Bolsa_Movimientos', label: 'Bolsa: movimientos', group: 'Bolsa', fields: [
+    f('ticker', 'Ticker'), f('fecha', 'Fecha', 'date'), f('tipo', 'Tipo', 'select', ['compra', 'venta', 'dividendo']),
+    f('cantidad', 'Cantidad', 'number'), f('precio', 'Precio', 'number'), f('comision', 'Comisión', 'number'), f('nota', 'Nota'),
+  ]},
+  { key: 'Inventario_Hogar', label: 'Inventario del hogar', group: 'Hogar', fields: [
+    f('item', 'Ítem'), f('categoria', 'Categoría'), f('fecha_compra', 'Fecha de compra', 'date'),
+    f('precio', 'Precio', 'number'), f('garantia_hasta', 'Garantía hasta', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Mantenimiento_Hogar', label: 'Mantenimiento del hogar', group: 'Hogar', fields: [
+    f('sistema', 'Sistema'), f('tipo', 'Tipo'), f('fecha', 'Fecha', 'date'), f('costo', 'Costo', 'number'),
+    f('proximo_vencimiento', 'Próximo vencimiento', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Seguros', label: 'Seguros', group: 'Hogar', fields: [
+    f('tipo', 'Tipo', 'select', ['hogar', 'auto', 'salud', 'vida']), f('aseguradora', 'Aseguradora'),
+    f('poliza_numero', 'Número de póliza'), f('fecha_inicio', 'Fecha inicio', 'date'),
+    f('fecha_vencimiento', 'Vencimiento', 'date'), f('prima', 'Prima', 'number'), f('cobertura_nota', 'Cobertura'),
+  ]},
+  { key: 'Deporte', label: 'Deporte', group: 'Salud', fields: [
+    f('fecha', 'Fecha', 'date'), f('tipo_actividad', 'Actividad'), f('duracion_min', 'Duración (min)', 'number'),
+    f('distancia_km', 'Distancia (km)', 'number'), f('calorias', 'Calorías', 'number'), f('nota', 'Nota'),
+  ]},
+  { key: 'Salud', label: 'Salud', group: 'Salud', fields: [
+    f('fecha', 'Fecha', 'date'), f('tipo', 'Tipo', 'select', ['cita', 'vacuna', 'medicamento', 'analisis']),
+    f('descripcion', 'Descripción'), f('proximo_vencimiento', 'Próximo vencimiento', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Mascotas', label: 'Mascotas', group: 'Salud', fields: [
+    f('nombre', 'Nombre'), f('especie', 'Especie'), f('fecha_nacimiento', 'Fecha de nacimiento', 'date'),
+    f('veterinario', 'Veterinario'), f('proxima_vacuna', 'Próxima vacuna', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Documentos_Personales', label: 'Documentos personales', group: 'Documentos', fields: [
+    f('tipo', 'Tipo'), f('numero', 'Número'), f('fecha_emision', 'Emisión', 'date'),
+    f('fecha_vencimiento', 'Vencimiento', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Metas', label: 'Metas', group: 'Productividad', fields: [
+    f('titulo', 'Título'), f('categoria', 'Categoría'), f('fecha_objetivo', 'Fecha objetivo', 'date'),
+    f('progreso_pct', 'Progreso (%)', 'number'), f('estado', 'Estado', 'select', ['en_curso', 'cumplida']), f('nota', 'Nota'),
+  ]},
+  { key: 'Lecturas', label: 'Lecturas', group: 'Productividad', fields: [
+    f('titulo', 'Título'), f('autor', 'Autor'), f('tipo', 'Tipo', 'select', ['libro', 'curso']),
+    f('estado', 'Estado', 'select', ['pendiente', 'en_curso', 'terminado']), f('fecha_inicio', 'Fecha inicio', 'date'),
+    f('fecha_fin', 'Fecha fin', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Mercado', label: 'Mercado', group: 'Ocio', fields: [
+    f('item', 'Ítem'), f('categoria', 'Categoría'), f('cantidad', 'Cantidad', 'number'), f('unidad', 'Unidad'),
+    f('comprado', 'Comprado', 'checkbox'), f('fecha', 'Fecha', 'date'), f('recurrente', 'Recurrente', 'checkbox'),
+  ]},
+  { key: 'Comidas', label: 'Comidas', group: 'Ocio', fields: [
+    f('fecha', 'Fecha', 'date'), f('tipo_comida', 'Tipo de comida', 'select', ['desayuno', 'almuerzo', 'cena']),
+    f('receta', 'Receta'), f('ingredientes_nota', 'Ingredientes'),
+  ]},
+  { key: 'Regalos', label: 'Regalos', group: 'Ocio', fields: [
+    f('persona', 'Persona'), f('ocasion', 'Ocasión'), f('fecha', 'Fecha', 'date'), f('idea', 'Idea'),
+    f('presupuesto', 'Presupuesto', 'number'), f('comprado', 'Comprado', 'checkbox'),
+  ]},
+  { key: 'Viajes', label: 'Viajes', group: 'Ocio', fields: [
+    f('destino', 'Destino'), f('fecha_inicio', 'Fecha inicio', 'date'), f('fecha_fin', 'Fecha fin', 'date'),
+    f('presupuesto', 'Presupuesto', 'number'), f('estado', 'Estado', 'select', ['planeado', 'confirmado', 'realizado']), f('nota', 'Nota'),
+  ]},
+  { key: 'Contactos', label: 'Contactos', group: 'Ocio', fields: [
+    f('nombre', 'Nombre'), f('relacion', 'Relación'), f('cumpleanos', 'Cumpleaños', 'date'),
+    f('ultima_interaccion', 'Última interacción', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Config', label: 'Configuración', group: 'Sistema', fields: [
+    f('clave', 'Clave'), f('valor', 'Valor'), f('categoria', 'Categoría'),
+  ]},
+];
+
+const NAV = [
+  { key: 'Tareas', label: 'Tareas', group: 'Productividad' },
+  { key: 'Transacciones', label: 'Transacciones', group: 'Finanzas' },
+  ...MODULES_GENERIC.map(m => ({ key: m.key, label: m.label, group: m.group })),
+];
+
+function navGroups() {
+  const map = {};
+  NAV.forEach(m => { (map[m.group] = map[m.group] || []).push(m); });
+  return map;
+}
+
+// ── Login ────────────────────────────────────────────────────────────────
+
+function Login({ onLogin }) {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  function submit(e) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'login', password }),
+    })
+      .then(r => r.json())
+      .then(res => {
+        setLoading(false);
+        if (res.token) {
+          localStorage.setItem('bitacora_token', res.token);
+          onLogin();
+        } else if (res.error === 'locked') {
+          setError(`Bloqueado. Intenta en ${res.minutesLeft} min.`);
+        } else {
+          setError('Contraseña incorrecta.');
+        }
+      })
+      .catch(() => { setLoading(false); setError('No se pudo conectar.'); });
+  }
+
+  return (
+    <div className="wrap">
+      <div className="card login-card">
+        <h1>Bitácora</h1>
+        <p>Registro personal — acceso privado</p>
+        <form onSubmit={submit}>
+          <input
+            type="password"
+            placeholder="Contraseña"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            autoFocus
+          />
+          <div style={{ height: 12 }} />
+          <button type="submit" disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}</button>
+        </form>
+        {error && <div className="error-msg">{error}</div>}
+      </div>
+    </div>
+  );
+}
+
+// ── Tareas (componente propio: checkbox de estado) ──────────────────────
+
+function TareasTab() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ titulo: '', categoria: '', prioridad: 'media', fecha_limite: '' });
+
+  function load() {
+    setLoading(true);
+    apiCall('list', { sheet: 'Tareas' }).then(res => { setItems(res || []); setLoading(false); });
+  }
+  useEffect(load, []);
+
+  function addTarea(e) {
+    e.preventDefault();
+    if (!form.titulo) return;
+    apiCall('create', { sheet: 'Tareas', data: { ...form, estado: 'pendiente' } }).then(() => {
+      setForm({ titulo: '', categoria: '', prioridad: 'media', fecha_limite: '' });
+      load();
+    });
+  }
+
+  function toggleEstado(item) {
+    const nuevoEstado = item.estado === 'hecha' ? 'pendiente' : 'hecha';
+    apiCall('update', { sheet: 'Tareas', data: { id: item.id, estado: nuevoEstado } }).then(load);
+  }
+
+  function remove(id) {
+    apiCall('delete', { sheet: 'Tareas', id }).then(load);
+  }
+
+  return (
+    <div>
+      <form className="entry-form" onSubmit={addTarea}>
+        <input className="full" placeholder="Título de la tarea" value={form.titulo}
+          onChange={e => setForm({ ...form, titulo: e.target.value })} />
+        <select value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })}>
+          <option value="">Sin categoría</option>
+          {CATEGORIAS_TAREAS.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <select value={form.prioridad} onChange={e => setForm({ ...form, prioridad: e.target.value })}>
+          <option value="baja">Prioridad baja</option>
+          <option value="media">Prioridad media</option>
+          <option value="alta">Prioridad alta</option>
+        </select>
+        <input type="date" value={form.fecha_limite}
+          onChange={e => setForm({ ...form, fecha_limite: e.target.value })} />
+        <button type="submit">Añadir tarea</button>
+      </form>
+
+      {loading ? <div className="empty">Cargando…</div> :
+        items.length === 0 ? <div className="empty">No hay tareas registradas.</div> :
+        <div className="log">
+          {items.map((it, i) => (
+            <div key={it.id} className={`entry ${it.estado === 'hecha' ? 'done' : ''}`}>
+              <span className="logbook-no">{String(i + 1).padStart(3, '0')}</span>
+              <div className="entry-main">
+                <div className="entry-title">{it.titulo}</div>
+                <div className="entry-meta">
+                  {it.categoria || 'sin categoría'} · {it.prioridad} {it.fecha_limite && `· vence ${it.fecha_limite}`}
+                </div>
+              </div>
+              <div className="entry-actions">
+                <button className="ghost" onClick={() => toggleEstado(it)}>
+                  {it.estado === 'hecha' ? 'Reabrir' : 'Hecha'}
+                </button>
+                <button className="ghost" onClick={() => remove(it.id)}>Borrar</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      }
+    </div>
+  );
+}
+
+// ── Transacciones (componente propio: cálculo de balance) ────────────────
+
+function TransaccionesTab() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ tipo: 'gasto', categoria: '', monto: '', cuenta: '', nota: '' });
+
+  function load() {
+    setLoading(true);
+    apiCall('list', { sheet: 'Transacciones' }).then(res => { setItems(res || []); setLoading(false); });
+  }
+  useEffect(load, []);
+
+  function addTransaccion(e) {
+    e.preventDefault();
+    if (!form.monto) return;
+    apiCall('create', { sheet: 'Transacciones', data: { ...form, fecha: new Date().toISOString().slice(0, 10) } }).then(() => {
+      setForm({ tipo: 'gasto', categoria: '', monto: '', cuenta: '', nota: '' });
+      load();
+    });
+  }
+
+  function remove(id) {
+    apiCall('delete', { sheet: 'Transacciones', id }).then(load);
+  }
+
+  const balance = items.reduce((acc, it) => {
+    const monto = parseFloat(it.monto) || 0;
+    return acc + (it.tipo === 'ingreso' ? monto : -monto);
+  }, 0);
+
+  return (
+    <div>
+      <div className="topbar">
+        <span className="entry-meta">Balance registrado</span>
+        <span className="entry-amount" style={{ color: balance >= 0 ? 'var(--teal-dark)' : 'var(--red)' }}>
+          {balance.toFixed(2)} €
+        </span>
+      </div>
+
+      <form className="entry-form" onSubmit={addTransaccion}>
+        <select value={form.tipo} onChange={e => setForm({ ...form, tipo: e.target.value })}>
+          <option value="gasto">Gasto</option>
+          <option value="ingreso">Ingreso</option>
+        </select>
+        <input type="number" step="0.01" placeholder="Monto" value={form.monto}
+          onChange={e => setForm({ ...form, monto: e.target.value })} />
+        <input placeholder="Categoría" value={form.categoria}
+          onChange={e => setForm({ ...form, categoria: e.target.value })} />
+        <input placeholder="Cuenta" value={form.cuenta}
+          onChange={e => setForm({ ...form, cuenta: e.target.value })} />
+        <input className="full" placeholder="Nota (opcional)" value={form.nota}
+          onChange={e => setForm({ ...form, nota: e.target.value })} />
+        <button type="submit">Añadir movimiento</button>
+      </form>
+
+      {loading ? <div className="empty">Cargando…</div> :
+        items.length === 0 ? <div className="empty">No hay movimientos registrados.</div> :
+        <div className="log">
+          {items.map((it, i) => (
+            <div key={it.id} className={`entry ${it.tipo}`}>
+              <span className="logbook-no">{String(i + 1).padStart(3, '0')}</span>
+              <div className="entry-main">
+                <div className="entry-title">{it.categoria || it.nota || 'Sin categoría'}</div>
+                <div className="entry-meta">{it.fecha} · {it.cuenta || 'sin cuenta'}</div>
+              </div>
+              <span className="entry-amount">
+                {it.tipo === 'gasto' ? '-' : '+'}{parseFloat(it.monto || 0).toFixed(2)} €
+              </span>
+              <div className="entry-actions">
+                <button className="ghost" onClick={() => remove(it.id)}>Borrar</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      }
+    </div>
+  );
+}
+
+// ── Módulo genérico (las otras 25 pestañas) ───────────────────────────────
+
+function GenericTab({ config }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  function emptyForm() {
+    const obj = {};
+    config.fields.forEach(field => { obj[field.name] = field.type === 'checkbox' ? false : ''; });
+    return obj;
+  }
+  const [form, setForm] = useState(emptyForm());
+
+  function load() {
+    setLoading(true);
+    apiCall('list', { sheet: config.key }).then(res => { setItems(res || []); setLoading(false); });
+  }
+  useEffect(load, [config.key]);
+
+  function add(e) {
+    e.preventDefault();
+    apiCall('create', { sheet: config.key, data: form }).then(() => {
+      setForm(emptyForm());
+      load();
+    });
+  }
+
+  function remove(id) {
+    apiCall('delete', { sheet: config.key, id }).then(load);
+  }
+
+  function renderField(field) {
+    const value = form[field.name];
+    const onChange = e => setForm({ ...form, [field.name]: e.target.value });
+
+    if (field.type === 'select') {
+      return (
+        <select key={field.name} value={value} onChange={onChange}>
+          <option value="">{field.label}</option>
+          {field.options.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+      );
+    }
+    if (field.type === 'checkbox') {
+      return (
+        <label key={field.name} className="checkbox-field">
+          <input type="checkbox" checked={!!value}
+            onChange={e => setForm({ ...form, [field.name]: e.target.checked })} />
+          {field.label}
+        </label>
+      );
+    }
+    return (
+      <input key={field.name} type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
+        step={field.type === 'number' ? '0.01' : undefined}
+        placeholder={field.label} value={value} onChange={onChange} />
+    );
+  }
+
+  return (
+    <div>
+      <form className="entry-form" onSubmit={add}>
+        {config.fields.map(renderField)}
+        <button type="submit">Añadir</button>
+      </form>
+
+      {loading ? <div className="empty">Cargando…</div> :
+        items.length === 0 ? <div className="empty">Sin registros.</div> :
+        <div className="log">
+          {items.map((it, i) => (
+            <div key={it.id || i} className="entry">
+              <span className="logbook-no">{String(i + 1).padStart(3, '0')}</span>
+              <div className="entry-main">
+                <div className="entry-title">{it[config.fields[0].name] || '(sin título)'}</div>
+                <div className="entry-meta">
+                  {config.fields.slice(1, 4).map(fld => it[fld.name]).filter(Boolean).join(' · ')}
+                </div>
+              </div>
+              <div className="entry-actions">
+                <button className="ghost" onClick={() => remove(it.id)}>Borrar</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      }
+    </div>
+  );
+}
+
+// ── App raíz ───────────────────────────────────────────────────────────
+
+function App() {
+  const [authed, setAuthed] = useState(!!localStorage.getItem('bitacora_token'));
+  const [currentModule, setCurrentModule] = useState('Tareas');
+  const groups = navGroups();
+
+  if (!authed) return <Login onLogin={() => setAuthed(true)} />;
+
+  const genericConfig = MODULES_GENERIC.find(m => m.key === currentModule);
+
+  return (
+    <div className="wrap">
+      <div className="brand">Bitácora <small>registro personal</small></div>
+
+      <select className="module-nav" value={currentModule} onChange={e => setCurrentModule(e.target.value)}>
+        {Object.keys(groups).map(g => (
+          <optgroup label={g} key={g}>
+            {groups[g].map(m => <option key={m.key} value={m.key}>{m.label}</option>)}
+          </optgroup>
+        ))}
+      </select>
+
+      {currentModule === 'Tareas' ? <TareasTab /> :
+        currentModule === 'Transacciones' ? <TransaccionesTab /> :
+        genericConfig ? <GenericTab config={genericConfig} /> : null}
+
+      <div className="footer">Bitácora {FRONTEND_VERSION}</div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
