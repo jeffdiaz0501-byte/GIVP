@@ -1,0 +1,2446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Bitácora</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #11131A;
+    --surface: #181B23;
+    --surface-2: #20242E;
+    --ink: #EDEFF3;
+    --ink-soft: #868C9A;
+    --ink-faint: #565C69;
+    --line: #262B36;
+    --accent: #4C7EF3;
+    --accent-dim: #2B4A8C;
+    --red: #E5555A;
+    --green: #3FCB8C;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .shell { display: flex; min-height: 100vh; }
+
+  /* ── Sidebar ─────────────────────────────────────────────── */
+  .sidebar {
+    width: 232px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--line);
+    padding: 24px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .brand {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: -0.01em;
+    padding: 0 10px 22px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .brand .dot { width: 8px; height: 8px; border-radius: 2px; background: var(--accent); }
+  .nav-section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+    padding: 14px 10px 6px;
+  }
+  .nav-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    color: var(--ink-soft);
+    border: none;
+    border-radius: 6px;
+    padding: 9px 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .nav-item:hover { background: var(--surface-2); color: var(--ink); }
+  .nav-item.active { background: var(--accent-dim); color: #fff; }
+  .nav-sub { padding: 2px 0 6px 14px; display: flex; flex-direction: column; gap: 1px; }
+  .nav-sub-item {
+    display: block; width: 100%; text-align: left;
+    background: transparent; border: none; border-left: 2px solid var(--line);
+    color: var(--ink-soft); padding: 7px 10px; border-radius: 0 6px 6px 0;
+    font-family: 'Inter', sans-serif; font-size: 12.5px; cursor: pointer;
+  }
+  .nav-sub-item:hover { background: var(--surface-2); color: var(--ink); }
+  .nav-sub-item.active { border-left-color: var(--accent); color: var(--accent); font-weight: 600; background: var(--surface-2); }
+
+  /* ── Layout principal ────────────────────────────────────── */
+  .main { flex: 1; min-width: 0; }
+  .topbar-mobile { display: none; }
+  .content { max-width: 760px; margin: 0 auto; padding: 40px 32px 80px; }
+  .page-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 22px;
+    margin: 0 0 4px;
+  }
+  .page-sub { color: var(--ink-soft); font-size: 13px; margin: 0 0 24px; }
+
+  /* ── Login ───────────────────────────────────────────────── */
+  .login-shell { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .login-card {
+    width: 100%; max-width: 340px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 32px;
+  }
+  .login-card h1 { font-family: 'Space Grotesk', sans-serif; font-size: 19px; margin: 0 0 4px; }
+  .login-card p { color: var(--ink-soft); font-size: 13px; margin: 0 0 22px; }
+
+  /* ── Controles ───────────────────────────────────────────── */
+  input, select, textarea {
+    width: 100%;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface-2);
+    color: var(--ink);
+  }
+  input::placeholder { color: var(--ink-faint); }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  button {
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 6px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+  }
+  button:hover { background: #5D8BF5; }
+  button.ghost { background: transparent; color: var(--ink-soft); border: 1px solid var(--line); }
+  button.ghost:hover { color: var(--ink); border-color: var(--ink-faint); }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .error-msg { color: var(--red); font-size: 13px; margin-top: 12px; }
+
+  /* ── Formularios de módulo ───────────────────────────────── */
+  .entry-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 22px;
+    padding: 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  .entry-form .full { grid-column: 1 / -1; }
+  .entry-form button { grid-column: 1 / -1; }
+  .entry-form label.checkbox-field { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-soft); }
+  .entry-form label.checkbox-field input { width: auto; }
+  .add-toggle-btn { margin-bottom: 16px; display: inline-flex; align-items: center; gap: 6px; }
+  .add-toggle-btn.cancel { background: transparent; color: var(--ink-soft); border: 1px solid var(--line); }
+
+  .inner-tabs { display: flex; gap: 6px; margin-bottom: 20px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+  .inner-tab {
+    background: transparent; color: var(--ink-soft); border: 1px solid var(--line);
+    padding: 7px 14px; font-size: 13px; font-weight: 500; border-radius: 6px; cursor: pointer;
+  }
+  .inner-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .account-row-editform { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+  .account-row-editform .full { grid-column: 1 / -1; }
+  .account-row-editform button { grid-column: 1 / -1; }
+  .releve-history { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+  .releve-history-item { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 8px; background: var(--surface-2); border-radius: 5px; }
+  .releve-history-item.no-coincide { border-left: 2px solid var(--red); }
+  .mes-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: 6px; }
+  .mes-chip { text-align: center; padding: 6px 0; border-radius: 5px; font-size: 11px; background: var(--surface-2); color: var(--ink-faint); border: 1px solid var(--line); }
+  .mes-chip.subido { background: var(--green); color: #fff; border-color: var(--green); font-weight: 600; }
+
+  /* ── Listado de entradas ─────────────────────────────────── */
+  .log { display: flex; flex-direction: column; gap: 8px; }
+  .entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 15px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .entry.done { opacity: 0.5; }
+  .entry-main { flex: 1; }
+  .entry-title { font-size: 14px; font-weight: 500; }
+  .entry-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft); margin-top: 3px; }
+  .entry-amount { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; }
+  .entry-amount.gasto { color: var(--red); }
+  .entry-amount.ingreso { color: var(--green); }
+  .entry-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .entry-actions button { padding: 5px 9px; font-size: 11px; }
+  .empty { color: var(--ink-faint); font-size: 13px; padding: 24px 0; text-align: center; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .footer { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-faint); text-align: center; margin-top: 48px; }
+
+  /* ── Dashboard ───────────────────────────────────────────── */
+  .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .dash-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+  .dash-card.full { grid-column: 1 / -1; }
+  .dash-label { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: 8px; }
+  .dash-value { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 600; }
+  .dash-row { display: flex; justify-content: space-between; padding: 7px 0; border-top: 1px solid var(--line); font-size: 13px; }
+  .dash-row:first-of-type { border-top: none; }
+  .agenda-row, .correo-row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; }
+  .agenda-row:first-of-type, .correo-row:first-of-type { border-top: none; }
+  .agenda-row .entry-meta, .correo-row .entry-meta { white-space: nowrap; }
+  .integration-error { color: var(--ink-faint); font-size: 12px; padding: 8px 0; }
+
+  .alert-card { border-color: var(--red) !important; }
+  .alert-card .dash-label { color: var(--red); }
+  .ocr-preview { white-space: pre-wrap; font-size: 11px; background: var(--surface-2); padding: 8px; border-radius: 6px; margin-top: 6px; max-height: 220px; overflow: auto; font-family: 'IBM Plex Mono', monospace; }
+  .account-row { display: flex; flex-direction: column; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 13px 15px; margin-bottom: 8px; }
+  .account-row-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .account-upload { display: flex; gap: 8px; align-items: center; }
+  .account-upload input[type="file"] { font-size: 12px; }
+
+  .multiselect-field { display: flex; flex-direction: column; gap: 8px; }
+  .multiselect-options { display: flex; flex-wrap: wrap; gap: 10px; }
+
+  .agenda-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+  .agenda-views { display: flex; gap: 6px; }
+  .agenda-nav { display: flex; gap: 6px; align-items: center; }
+  .agenda-nav button { padding: 7px 11px; font-size: 12px; }
+  .agenda-day-title { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 600; margin-bottom: 12px; text-transform: capitalize; }
+
+  .agenda-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  .agenda-week-col { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px; cursor: pointer; min-height: 90px; }
+  .agenda-week-col:hover { border-color: var(--accent); }
+  .agenda-week-col-header { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; text-transform: uppercase; color: var(--ink-faint); text-align: center; margin-bottom: 6px; line-height: 1.4; }
+  .agenda-week-event { font-size: 11px; background: var(--surface-2); border-radius: 4px; padding: 3px 5px; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .agenda-week-empty { font-size: 11px; color: var(--ink-faint); text-align: center; padding-top: 8px; }
+  .agenda-week-more { font-size: 10px; color: var(--ink-faint); text-align: center; }
+
+  .agenda-month-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
+  .agenda-month-weekdays div { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; text-transform: uppercase; color: var(--ink-faint); text-align: center; }
+  .agenda-month { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: 92px; gap: 6px; }
+  .agenda-month-cell { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px; cursor: pointer; box-sizing: border-box; overflow: hidden; }
+  .agenda-month-cell:hover { border-color: var(--accent); }
+  .agenda-month-cell.fuera { opacity: 0.35; }
+  .agenda-month-daynum { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft); margin-bottom: 4px; }
+  .agenda-month-event { font-size: 10px; background: var(--surface-2); border-radius: 3px; padding: 2px 4px; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .agenda-month-more { font-size: 9px; color: var(--ink-faint); }
+
+  /* ── Kanban ──────────────────────────────────────────────── */
+  .kanban-toolbar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+  .kanban-toolbar select { width: auto; min-width: 180px; }
+  .kanban-board { display: flex; gap: 12px; margin-bottom: 8px; }
+  .kanban-col { flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+  .kanban-col.drag-over { border-color: var(--accent); }
+  .kanban-col-header {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--ink-faint); padding: 4px 6px 10px;
+  }
+  .kanban-col-count { background: var(--surface-2); border-radius: 10px; padding: 1px 7px; }
+  .kanban-cards { display: flex; flex-direction: column; gap: 8px; min-height: 40px; }
+  .kanban-card {
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px;
+    padding: 10px 12px; cursor: grab; font-size: 13px;
+  }
+  .kanban-card:active { cursor: grabbing; }
+  .kanban-card.busy { opacity: 0.55; cursor: default; }
+  .kanban-card-title { font-weight: 500; margin-bottom: 5px; }
+  .kanban-card-meta { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+  .chip {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 2px 7px;
+    border-radius: 4px; background: var(--surface); color: var(--ink-soft); border: 1px solid var(--line);
+  }
+  .chip.prioridad-alta { color: var(--red); border-color: var(--red); }
+  .kanban-card-actions { display: flex; gap: 4px; margin-top: 8px; }
+  .kanban-card-actions button { font-size: 10px; padding: 4px 7px; }
+
+  /* ── Barra de progreso ───────────────────────────────────── */
+  .progress-bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; margin: 6px 0 2px; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 3px; }
+
+  /* ── Resumen de Productividad ────────────────────────────── */
+  .resumen-section { margin-bottom: 32px; }
+  .resumen-section h3 {
+    font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 600;
+    margin: 0 0 12px; display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .resumen-section h3 a { font-family: 'Inter', sans-serif; font-size: 12px; color: var(--accent); cursor: pointer; font-weight: 500; }
+  .meta-row { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
+  .meta-row-top { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+  .meta-row-top .meta-title { font-weight: 500; cursor: pointer; }
+  .hitos-list { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+  .hito-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .hito-row input[type="checkbox"] { width: auto; }
+  .hito-row.completado span.hito-title { text-decoration: line-through; color: var(--ink-faint); }
+  .hito-title { flex: 1; }
+  .hito-add { display: flex; gap: 6px; margin-top: 8px; }
+  .hito-add input { flex: 1; }
+  .hito-add button { padding: 8px 12px; font-size: 12px; }
+
+  /* ── Responsive: sidebar se convierte en menú deslizante ────── */
+  @media (max-width: 780px) {
+    .sidebar {
+      position: fixed; top: 0; left: 0; height: 100%; z-index: 40;
+      transform: translateX(-100%);
+      transition: transform 0.2s ease;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 30;
+    }
+    .topbar-mobile {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 20px; border-bottom: 1px solid var(--line);
+    }
+    .menu-btn {
+      background: var(--surface); border: 1px solid var(--line); color: var(--ink);
+      padding: 7px 11px; border-radius: 6px;
+    }
+    .content { padding: 28px 20px 80px; }
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .entry-form { grid-template-columns: 1fr; }
+    .kanban-board { flex-direction: column; }
+    .agenda-week { grid-template-columns: 1fr; }
+    .agenda-month { grid-auto-rows: 52px; }
+    .agenda-month-cell { padding: 4px; }
+    .agenda-month-event { display: none; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect } = React;
+
+// EDITA ESTA LÍNEA con la URL /exec de tu Apps Script
+const API_URL = 'https://script.google.com/macros/s/AKfycbzyiNpF_5-LtQllyu5D_o78di1NftdL_j-Nib44hNh4pSWD3xvLNHpyxGYqg1-lPKH5/exec';
+const FRONTEND_VERSION = 'v1.14.0';
+
+const CATEGORIAS_TAREAS = ['Trabajo', 'Personal', 'Hogar', 'Salud', 'Finanzas', 'Ocio', 'Estudio', 'Otro'];
+
+const CATEGORIAS_TRANSACCIONES = {
+  'Vivienda': ['Alquiler', 'Hipoteca', 'Mantenimiento', 'Comunidad'],
+  'Alimentación': ['Supermercado', 'Restaurantes', 'Comida rápida', 'Cafetería'],
+  'Transporte': ['Transporte público', 'Combustible', 'Taxi / VTC', 'Mantenimiento vehículo'],
+  'Ocio': ['Salidas', 'Suscripciones digitales', 'Viajes', 'Deporte'],
+  'Salud': ['Farmacia', 'Médico', 'Seguro salud'],
+  'Servicios': ['Electricidad', 'Agua', 'Internet / Móvil', 'Comisiones bancarias'],
+  'Ingresos': ['Salario', 'Transferencias', 'Reembolsos', 'Otros ingresos'],
+  'Otros': ['Varios', 'Sin clasificar'],
+};
+
+function apiCall(action, extra) {
+  const token = localStorage.getItem('bitacora_token');
+  return fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify(Object.assign({ action, token }, extra)),
+  })
+    .then(r => r.text())
+    .then(text => {
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        return { error: 'respuesta_invalida', message: 'El servidor no devolvió JSON válido (posible bloqueo de cookies de terceros al probar en local, o la URL del backend cambió).' };
+      }
+    })
+    .catch(() => ({ error: 'network_error', message: 'No se pudo conectar con el backend.' }));
+}
+
+function f(name, label, type, options) {
+  return { name, label, type: type || 'text', options };
+}
+
+const MODULES_GENERIC = [
+  { key: 'Deudas', label: 'Deudas', group: 'Finanzas', fields: [
+    f('acreedor', 'Acreedor'), f('monto_total', 'Monto total', 'number'), f('tasa_interes', 'Tasa interés %', 'number'),
+    f('cuota_mensual', 'Cuota mensual', 'number'), f('fecha_inicio', 'Fecha inicio', 'date'),
+    f('fecha_proximo_pago', 'Próximo pago', 'date'), f('estado', 'Estado', 'select', ['activa', 'pagada']),
+  ]},
+  { key: 'Pagos_Deudas', label: 'Pagos de deudas', group: 'Finanzas', fields: [
+    f('deuda_id', 'ID de deuda'), f('fecha', 'Fecha', 'date'), f('monto', 'Monto', 'number'), f('nota', 'Nota'),
+  ]},
+  { key: 'Patrimonio_Snapshot', label: 'Patrimonio neto', group: 'Finanzas', fields: [
+    f('fecha', 'Fecha', 'date'), f('total_bolsa', 'Total bolsa', 'number'), f('total_ahorros', 'Total ahorros', 'number'),
+    f('total_deudas', 'Total deudas', 'number'), f('patrimonio_neto', 'Patrimonio neto', 'number'), f('nota', 'Nota'),
+  ]},
+  { key: 'Facturas_Servicios', label: 'Facturas de servicios', group: 'Finanzas', fields: [
+    f('servicio', 'Servicio'), f('fecha', 'Fecha', 'date'), f('monto', 'Monto', 'number'),
+    f('consumo', 'Consumo', 'number'), f('unidad_consumo', 'Unidad'), f('proveedor', 'Proveedor'),
+  ]},
+  { key: 'Impuestos', label: 'Impuestos', group: 'Finanzas', fields: [
+    f('anio_fiscal', 'Año fiscal'), f('tipo', 'Tipo'), f('fecha_limite', 'Fecha límite', 'date'),
+    f('estado', 'Estado', 'select', ['pendiente', 'presentado']), f('nota', 'Nota'),
+  ]},
+  { key: 'Vehiculos', label: 'Vehículos', group: 'Vehículos', fields: [
+    f('nombre', 'Nombre'), f('marca', 'Marca'), f('modelo', 'Modelo'), f('anio', 'Año', 'number'),
+    f('matricula', 'Matrícula'), f('kilometraje_actual', 'Kilometraje actual', 'number'),
+    f('fecha_ultima_revision', 'Última revisión', 'date'),
+  ]},
+  { key: 'Mantenimiento_Vehiculos', label: 'Mantenimiento', group: 'Vehículos', fields: [
+    f('vehiculo_id', 'ID vehículo'), f('tipo', 'Tipo'), f('fecha', 'Fecha', 'date'),
+    f('kilometraje', 'Kilometraje', 'number'), f('costo', 'Costo', 'number'),
+    f('proximo_vencimiento', 'Próximo vencimiento', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Cuentas_Bolsa', label: 'Bolsa: cuentas / brokers', group: 'Finanzas', fields: [
+    f('nombre', 'Nombre'), f('broker', 'Broker'), f('nota', 'Nota'),
+  ]},
+  { key: 'Bolsa_Movimientos', label: 'Bolsa: movimientos', group: 'Finanzas', fields: [
+    f('ticker', 'Ticker'), f('fecha', 'Fecha', 'date'), f('tipo', 'Tipo', 'select', ['compra', 'venta', 'dividendo']),
+    f('cantidad', 'Cantidad', 'number'), f('precio', 'Precio', 'number'), f('comision', 'Comisión', 'number'), f('nota', 'Nota'),
+  ]},
+  { key: 'Inventario_Hogar', label: 'Inventario', group: 'Hogar', fields: [
+    f('item', 'Ítem'), f('categoria', 'Categoría'), f('fecha_compra', 'Fecha de compra', 'date'),
+    f('precio', 'Precio', 'number'), f('garantia_hasta', 'Garantía hasta', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Mantenimiento_Hogar', label: 'Mantenimiento', group: 'Hogar', fields: [
+    f('sistema', 'Sistema'), f('tipo', 'Tipo'), f('fecha', 'Fecha', 'date'), f('costo', 'Costo', 'number'),
+    f('proximo_vencimiento', 'Próximo vencimiento', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Seguros', label: 'Seguros', group: 'Hogar', fields: [
+    f('tipo', 'Tipo', 'select', ['hogar', 'auto', 'salud', 'vida']), f('aseguradora', 'Aseguradora'),
+    f('poliza_numero', 'Número de póliza'), f('fecha_inicio', 'Fecha inicio', 'date'),
+    f('fecha_vencimiento', 'Vencimiento', 'date'), f('prima', 'Prima', 'number'), f('cobertura_nota', 'Cobertura'),
+  ]},
+  { key: 'Deporte', label: 'Deporte', group: 'Salud', fields: [
+    f('fecha', 'Fecha', 'date'), f('tipo_actividad', 'Actividad'), f('duracion_min', 'Duración (min)', 'number'),
+    f('distancia_km', 'Distancia (km)', 'number'), f('calorias', 'Calorías', 'number'), f('nota', 'Nota'),
+  ]},
+  { key: 'Salud', label: 'Salud', group: 'Salud', fields: [
+    f('fecha', 'Fecha', 'date'), f('tipo', 'Tipo', 'select', ['cita', 'vacuna', 'medicamento', 'analisis']),
+    f('descripcion', 'Descripción'), f('proximo_vencimiento', 'Próximo vencimiento', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Mascotas', label: 'Mascotas', group: 'Salud', fields: [
+    f('nombre', 'Nombre'), f('especie', 'Especie'), f('fecha_nacimiento', 'Fecha de nacimiento', 'date'),
+    f('veterinario', 'Veterinario'), f('proxima_vacuna', 'Próxima vacuna', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Documentos_Personales', label: 'Documentos', group: 'Documentos', fields: [
+    f('tipo', 'Tipo'), f('numero', 'Número'), f('fecha_emision', 'Emisión', 'date'),
+    f('fecha_vencimiento', 'Vencimiento', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Aprendizaje', label: 'Aprendizaje', group: 'Productividad', fields: [
+    f('titulo', 'Título'), f('autor', 'Fuente / autor'), f('tipo', 'Tipo', 'select', ['libro', 'curso', 'tutorial', 'certificacion', 'habilidad', 'otro']),
+    f('estado', 'Estado', 'select', ['pendiente', 'en_curso', 'terminado']), f('fecha_inicio', 'Fecha inicio', 'date'),
+    f('fecha_fin', 'Fecha fin', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Disponibilidad', label: 'Compromisos de tiempo', group: 'Productividad', fields: [
+    f('nombre', 'Nombre (ej. CDI - Empresa, Misión - Cliente)', 'text'),
+    f('tipo', 'Tipo', 'select', ['Salarié', 'Empresa personal']),
+    f('fecha_inicio', 'Fecha inicio', 'date'),
+    f('fecha_fin', 'Fecha fin (vacío = indefinido/recurrente)', 'date'),
+    f('horas_semana', 'Horas por semana (referencia)', 'number'),
+    f('dias_semana', 'Días recurrentes (solo si es indefinido)', 'multiselect', ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']),
+    f('hora_inicio', 'Hora inicio (si es indefinido)', 'time'),
+    f('hora_fin', 'Hora fin (si es indefinido)', 'time'),
+    f('nota', 'Nota'),
+  ]},
+  { key: 'Mercado', label: 'Mercado', group: 'Ocio', fields: [
+    f('item', 'Ítem'), f('categoria', 'Categoría'), f('cantidad', 'Cantidad', 'number'), f('unidad', 'Unidad'),
+    f('comprado', 'Comprado', 'checkbox'), f('fecha', 'Fecha', 'date'), f('recurrente', 'Recurrente', 'checkbox'),
+  ]},
+  { key: 'Comidas', label: 'Comidas', group: 'Ocio', fields: [
+    f('fecha', 'Fecha', 'date'), f('tipo_comida', 'Tipo de comida', 'select', ['desayuno', 'almuerzo', 'cena']),
+    f('receta', 'Receta'), f('ingredientes_nota', 'Ingredientes'),
+  ]},
+  { key: 'Regalos', label: 'Regalos', group: 'Ocio', fields: [
+    f('persona', 'Persona'), f('ocasion', 'Ocasión'), f('fecha', 'Fecha', 'date'), f('idea', 'Idea'),
+    f('presupuesto', 'Presupuesto', 'number'), f('comprado', 'Comprado', 'checkbox'),
+  ]},
+  { key: 'Viajes', label: 'Viajes', group: 'Ocio', fields: [
+    f('destino', 'Destino'), f('fecha_inicio', 'Fecha inicio', 'date'), f('fecha_fin', 'Fecha fin', 'date'),
+    f('presupuesto', 'Presupuesto', 'number'), f('estado', 'Estado', 'select', ['planeado', 'confirmado', 'realizado']), f('nota', 'Nota'),
+  ]},
+  { key: 'Contactos', label: 'Contactos', group: 'Ocio', fields: [
+    f('nombre', 'Nombre'), f('relacion', 'Relación'), f('cumpleanos', 'Cumpleaños', 'date'),
+    f('ultima_interaccion', 'Última interacción', 'date'), f('nota', 'Nota'),
+  ]},
+  { key: 'Config', label: 'Configuración', group: 'Sistema', fields: [
+    f('clave', 'Clave'), f('valor', 'Valor'), f('categoria', 'Categoría'),
+  ]},
+];
+
+const NAV = [
+  { key: 'Agenda', label: 'Agenda', group: 'Productividad' },
+  { key: 'Correo', label: 'Correo destacado', group: 'Productividad' },
+  { key: 'Tareas', label: 'Tareas', group: 'Productividad' },
+  { key: 'Metas', label: 'Metas', group: 'Productividad' },
+  { key: 'AnalisisFinanciero', label: 'Análisis financiero', group: 'Finanzas' },
+  { key: 'Cuentas_Bancarias', label: 'Cuentas bancarias', group: 'Finanzas' },
+  { key: 'Bolsa_Posiciones', label: 'Inversiones', group: 'Finanzas' },
+  { key: 'Patrimonio_Snapshot', label: 'Patrimonio', group: 'Finanzas' },
+  ...MODULES_GENERIC.filter(m => !['Bolsa_Movimientos', 'Cuentas_Bolsa', 'Deudas', 'Pagos_Deudas', 'Suscripciones', 'Facturas_Servicios', 'Patrimonio_Snapshot'].includes(m.key)).map(m => ({ key: m.key, label: m.label, group: m.group })),
+];
+
+const TOP_CATEGORIES = ['Dashboard', 'Productividad', 'Finanzas', 'Vehículos', 'Hogar', 'Salud', 'Documentos', 'Ocio', 'Sistema'];
+
+function modulesForCategory(cat) {
+  return NAV.filter(m => m.group === cat);
+}
+
+function Login({ onLogin }) {
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  function submit(e) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'login', password }) })
+      .then(r => r.json())
+      .then(res => {
+        setLoading(false);
+        if (res.token) {
+          localStorage.setItem('bitacora_token', res.token);
+          onLogin();
+        } else if (res.error === 'locked') {
+          setError(`Bloqueado. Intenta en ${res.minutesLeft} min.`);
+        } else {
+          setError('Contraseña incorrecta.');
+        }
+      })
+      .catch(() => { setLoading(false); setError('No se pudo conectar.'); });
+  }
+
+  return (
+    <div className="login-shell">
+      <div className="login-card">
+        <h1>Bitácora</h1>
+        <p>Acceso privado</p>
+        <form onSubmit={submit}>
+          <input type="password" placeholder="Contraseña" value={password}
+            onChange={e => setPassword(e.target.value)} autoFocus />
+          <div style={{ height: 12 }} />
+          <button type="submit" disabled={loading} style={{ width: '100%' }}>{loading ? 'Entrando...' : 'Entrar'}</button>
+        </form>
+        {error && <div className="error-msg">{error}</div>}
+      </div>
+    </div>
+  );
+}
+
+function Dashboard({ onNavigate }) {
+  const [core, setCore] = useState(null);
+  const [metas, setMetas] = useState(null);
+  const [hitos, setHitos] = useState([]);
+  const [aprendizaje, setAprendizaje] = useState(null);
+  const [compromisos, setCompromisos] = useState(null);
+  const [agenda, setAgenda] = useState(null);
+  const [correo, setCorreo] = useState(null);
+  const [cuentasBancarias, setCuentasBancarias] = useState(null);
+  const [saldosRegistrados, setSaldosRegistrados] = useState(null);
+  const [mostrarDesgloseBalance, setMostrarDesgloseBalance] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      apiCall('list', { sheet: 'Tareas' }),
+      apiCall('list', { sheet: 'Transacciones' }),
+      apiCall('list', { sheet: 'Deudas' }),
+      apiCall('list', { sheet: 'Suscripciones' }),
+    ]).then(([tareas, transacciones, deudas, suscripciones]) => {
+      setCore({
+        tareas: Array.isArray(tareas) ? tareas : [],
+        transacciones: Array.isArray(transacciones) ? transacciones : [],
+        deudas: Array.isArray(deudas) ? deudas : [],
+        suscripciones: Array.isArray(suscripciones) ? suscripciones : [],
+      });
+    });
+    apiCall('list', { sheet: 'Metas' }).then(res => setMetas(Array.isArray(res) ? res : []));
+    apiCall('list', { sheet: 'Hitos_Metas' }).then(res => setHitos(Array.isArray(res) ? res : []));
+    apiCall('list', { sheet: 'Aprendizaje' }).then(res => setAprendizaje(Array.isArray(res) ? res : []));
+    apiCall('list', { sheet: 'Disponibilidad' }).then(res => setCompromisos(Array.isArray(res) ? res : []));
+    apiCall('list', { sheet: 'Cuentas_Bancarias' }).then(res => setCuentasBancarias(Array.isArray(res) ? res : []));
+    apiCall('list', { sheet: 'Saldos_Registrados' }).then(res => setSaldosRegistrados(Array.isArray(res) ? res : []));
+    apiCall('calendarEvents').then(res => setAgenda(res && !res.error ? res : { error: (res && res.message) || 'No se pudo leer el calendario.' }));
+    apiCall('gmailDestacados').then(res => setCorreo(res && !res.error ? res : { error: (res && res.message) || 'No se pudo leer el correo.' }));
+  }, []);
+
+  function progresoDe(meta) {
+    const propios = hitos.filter(h => h.meta_id === meta.id);
+    if (propios.length === 0) return parseFloat(meta.progreso_pct) || 0;
+    const completados = propios.filter(h => h.completado === true || h.completado === 'true').length;
+    return Math.round((completados / propios.length) * 100);
+  }
+
+  if (!core) return <div className="empty">Cargando…</div>;
+
+  const pendientes = core.tareas.filter(t => t.estado !== 'hecha');
+  const balance = core.transacciones.reduce((acc, it) => {
+    const m = parseFloat(it.monto) || 0;
+    if (it.tipo === 'ingreso') return acc + m;
+    if (it.tipo === 'gasto') return acc - m;
+    return acc;
+  }, 0);
+  const proximosPagos = [
+    ...core.deudas.filter(d => d.fecha_proximo_pago).map(d => ({ label: d.acreedor, fecha: d.fecha_proximo_pago })),
+    ...core.suscripciones.filter(s => s.fecha_proximo_cobro).map(s => ({ label: s.nombre, fecha: s.fecha_proximo_cobro })),
+  ].sort((a, b) => new Date(a.fecha) - new Date(b.fecha)).slice(0, 4);
+
+  const hoyDiaNum = new Date().getDate();
+  const mesActualStr = new Date().toISOString().slice(0, 7);
+  const relevesPendientes = (cuentasBancarias || []).filter(c => {
+    const hasta = parseInt(c.dia_relave_hasta, 10);
+    if (!hasta) return false;
+    const yaSubidoEsteMes = c.ultima_fecha_relave && c.ultima_fecha_relave.slice(0, 7) === mesActualStr;
+    return hoyDiaNum > hasta && !yaSubidoEsteMes;
+  });
+
+  const saldosDesactualizados = (cuentasBancarias || []).filter(c => {
+    const propios = (saldosRegistrados || []).filter(s => s.cuenta_id === c.id);
+    if (propios.length === 0) return true;
+    const masReciente = propios.reduce((max, s) => new Date(s.fecha_registro) > new Date(max.fecha_registro) ? s : max, propios[0]);
+    const dias = (new Date() - new Date(masReciente.fecha_registro)) / 86400000;
+    return dias > 15;
+  });
+
+  const ingresosReales = core.transacciones.filter(t => t.tipo === 'ingreso').reduce((a, t) => a + (parseFloat(t.monto) || 0), 0);
+  const gastosReales = core.transacciones.filter(t => t.tipo === 'gasto').reduce((a, t) => a + (parseFloat(t.monto) || 0), 0);
+  const netoTransferenciasTotal = core.transacciones.filter(t => t.tipo === 'transferencia').reduce((a, t) => a + (t.direccion === 'entrada' ? (parseFloat(t.monto) || 0) : -(parseFloat(t.monto) || 0)), 0);
+
+  const hoy = new Date();
+  const compromisosVigentes = (compromisos || []).filter(c => {
+    const inicio = c.fecha_inicio ? new Date(c.fecha_inicio) : null;
+    const fin = c.fecha_fin ? new Date(c.fecha_fin) : null;
+    return (!inicio || inicio <= hoy) && (!fin || fin >= hoy);
+  });
+  const horasPorTipo = compromisosVigentes.reduce((acc, c) => {
+    acc[c.tipo] = (acc[c.tipo] || 0) + (parseFloat(c.horas_semana) || 0);
+    return acc;
+  }, {});
+
+  return (
+    <div className="dashboard-grid">
+      {relevesPendientes.length > 0 && (
+        <div className="dash-card full alert-card">
+          <div className="dash-label">⚠ Relevés bancarios pendientes <a onClick={() => onNavigate('Finanzas', 'Cuentas_Bancarias')} style={{ float: 'right', color: 'var(--accent)', cursor: 'pointer' }}>subir →</a></div>
+          {relevesPendientes.map(c => (
+            <div key={c.id} className="dash-row"><span>{c.nombre}</span><span className="entry-meta">esperado hasta el día {c.dia_relave_hasta}</span></div>
+          ))}
+        </div>
+      )}
+      {saldosDesactualizados.length > 0 && (
+        <div className="dash-card full alert-card">
+          <div className="dash-label">⚠ Saldos sin actualizar (+15 días) <a onClick={() => onNavigate('Finanzas', 'Cuentas_Bancarias')} style={{ float: 'right', color: 'var(--accent)', cursor: 'pointer' }}>registrar →</a></div>
+          {saldosDesactualizados.map(c => (
+            <div key={c.id} className="dash-row"><span>{c.nombre}</span><span className="entry-meta">registra el saldo actual</span></div>
+          ))}
+        </div>
+      )}
+      <div className="dash-card">
+        <div className="dash-label">Tareas pendientes</div>
+        <div className="dash-value">{pendientes.length}</div>
+      </div>
+      <div className="dash-card" style={{ cursor: 'pointer' }} onClick={() => setMostrarDesgloseBalance(!mostrarDesgloseBalance)}>
+        <div className="dash-label">Balance registrado (clic para ver el cálculo)</div>
+        <div className="dash-value" style={{ color: balance >= 0 ? 'var(--green)' : 'var(--red)' }}>{balance.toFixed(2)} €</div>
+      </div>
+      {mostrarDesgloseBalance && (
+        <div className="dash-card full">
+          <div className="dash-label">Cómo se calcula el Balance registrado</div>
+          <div className="dash-row"><span>Ingresos reales (sin transferencias)</span><span className="entry-meta">+{ingresosReales.toFixed(2)} €</span></div>
+          <div className="dash-row"><span>Gastos reales (sin transferencias)</span><span className="entry-meta">−{gastosReales.toFixed(2)} €</span></div>
+          <div className="dash-row"><span style={{ fontWeight: 600 }}>= Balance registrado</span><span className="entry-meta" style={{ fontWeight: 600 }}>{balance.toFixed(2)} €</span></div>
+          <div className="entry-meta" style={{ marginTop: 10, lineHeight: 1.5 }}>
+            Esto es tu flujo neto acumulado (todo lo que has registrado como ingreso real menos gasto real), sin contar transferencias entre tus propias cuentas ({netoTransferenciasTotal >= 0 ? '+' : ''}{netoTransferenciasTotal.toFixed(2)} € netos, no incluidos arriba).
+            <br /><br />
+            <strong>No es lo mismo que el saldo de tu banco.</strong> El saldo real de un relevé parte de un saldo inicial concreto y sí suma las transferencias — por eso pueden no coincidir. Para ver el saldo real de una cuenta, revisa su historial en Cuentas bancarias.
+          </div>
+        </div>
+      )}
+      <div className="dash-card full">
+        <div className="dash-label">Próximos pagos</div>
+        {proximosPagos.length === 0 ? <div className="empty">Nada próximo.</div> :
+          proximosPagos.map((p, i) => (
+            <div key={i} className="dash-row"><span>{p.label}</span><span className="entry-meta">{p.fecha}</span></div>
+          ))
+        }
+      </div>
+
+      <div className="dash-card full">
+        <div className="dash-label">Tablero de tareas <a onClick={() => onNavigate('Productividad', 'Tareas')} style={{ float: 'right', color: 'var(--accent)', cursor: 'pointer' }}>ver completo →</a></div>
+        <TareasTab compact />
+      </div>
+
+      <div className="dash-card full">
+        <div className="dash-label">Metas <a onClick={() => onNavigate('Productividad', 'Metas')} style={{ float: 'right', color: 'var(--accent)', cursor: 'pointer' }}>ver todas →</a></div>
+        {!metas ? <div className="empty">Cargando…</div> :
+          metas.length === 0 ? <div className="empty">Sin metas registradas.</div> :
+          metas.slice(0, 4).map(m => (
+            <div key={m.id} className="meta-row">
+              <div className="meta-row-top"><span>{m.titulo}</span><span className="entry-meta">{progresoDe(m)}%</span></div>
+              <div className="progress-bar"><div className="progress-fill" style={{ width: `${Math.min(100, progresoDe(m))}%` }}></div></div>
+            </div>
+          ))
+        }
+      </div>
+
+      <div className="dash-card full">
+        <div className="dash-label">Agenda (próximos 7 días)</div>
+        {!agenda ? <div className="empty">Cargando…</div> :
+          agenda.error ? <div className="integration-error">{agenda.error} — autoriza Calendar tras redesplegar el backend.</div> :
+          agenda.length === 0 ? <div className="empty">Sin eventos próximos.</div> :
+          agenda.slice(0, 5).map(ev => (
+            <div key={ev.id} className="agenda-row">
+              <span>{ev.titulo}</span>
+              <span className="entry-meta">{ev.todoDia ? 'Todo el día' : new Date(ev.inicio).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+          ))
+        }
+      </div>
+
+      <div className="dash-card full">
+        <div className="dash-label">Correo destacado</div>
+        {!correo ? <div className="empty">Cargando…</div> :
+          correo.error ? <div className="integration-error">{correo.error} — autoriza Gmail tras redesplegar el backend.</div> :
+          correo.length === 0 ? <div className="empty">Sin correos destacados.</div> :
+          correo.slice(0, 5).map(c => (
+            <div key={c.id} className="correo-row">
+              <span>{c.asunto}</span>
+              <span className="entry-meta">{c.remitente.split('<')[0].trim()}</span>
+            </div>
+          ))
+        }
+      </div>
+
+      <div className="dash-card full">
+        <div className="dash-label">Compromisos de tiempo vigentes <a onClick={() => onNavigate('Productividad', 'Disponibilidad')} style={{ float: 'right', color: 'var(--accent)', cursor: 'pointer' }}>editar →</a></div>
+        {!compromisos ? <div className="empty">Cargando…</div> :
+          Object.keys(horasPorTipo).length === 0 ? <div className="empty">Sin compromisos vigentes registrados.</div> :
+          Object.keys(horasPorTipo).map(tipo => (
+            <div key={tipo} className="dash-row"><span>{tipo}</span><span className="entry-meta">{horasPorTipo[tipo].toFixed(1)} h/semana</span></div>
+          ))
+        }
+      </div>
+
+      <div className="dash-card full">
+        <div className="dash-label">Aprendizaje en curso</div>
+        {!aprendizaje ? <div className="empty">Cargando…</div> :
+          aprendizaje.filter(l => l.estado === 'en_curso').length === 0 ? <div className="empty">Nada en curso ahora.</div> :
+          aprendizaje.filter(l => l.estado === 'en_curso').map(l => (
+            <div key={l.id} className="dash-row"><span>{l.titulo}</span><span className="entry-meta">{l.autor || ''}</span></div>
+          ))
+        }
+      </div>
+    </div>
+  );
+}
+
+const KANBAN_COLUMNS = [
+  { key: 'pendiente', label: 'Pendiente' },
+  { key: 'en_curso', label: 'En curso' },
+  { key: 'hecha', label: 'Hecho' },
+];
+
+function startOfWeek_(date) {
+  const d = new Date(date);
+  const dia = d.getDay();
+  const diff = (dia === 0 ? -6 : 1) - dia;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+function startOfMonth_(date) { return new Date(date.getFullYear(), date.getMonth(), 1); }
+function addDays_(date, n) { const d = new Date(date); d.setDate(d.getDate() + n); return d; }
+function isSameDay_(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+
+function AgendaTab() {
+  const [view, setView] = useState('semana');
+  const [anchor, setAnchor] = useState(new Date());
+  const [eventos, setEventos] = useState(null);
+  const [syncStatus, setSyncStatus] = useState(null);
+
+  function rango() {
+    if (view === 'dia') {
+      const start = new Date(anchor); start.setHours(0, 0, 0, 0);
+      return [start, addDays_(start, 1)];
+    }
+    if (view === 'semana') {
+      const start = startOfWeek_(anchor);
+      return [start, addDays_(start, 7)];
+    }
+    const inicioMes = startOfMonth_(anchor);
+    const finMes = new Date(inicioMes.getFullYear(), inicioMes.getMonth() + 1, 1);
+    const gridStart = startOfWeek_(inicioMes);
+    const gridEnd = addDays_(startOfWeek_(addDays_(finMes, -1)), 7);
+    return [gridStart, gridEnd];
+  }
+
+  function cargar() {
+    const [start, end] = rango();
+    setEventos(null);
+    apiCall('calendarEvents', { rangeStart: start.toISOString(), rangeEnd: end.toISOString() })
+      .then(res => setEventos(res && !res.error ? res : { error: (res && res.message) || 'No se pudo leer el calendario.' }));
+  }
+  useEffect(cargar, [view, anchor]);
+
+  function sincronizar() {
+    setSyncStatus('cargando');
+    const [start, end] = rango();
+    apiCall('calendarEvents', { rangeStart: start.toISOString(), rangeEnd: end.toISOString() })
+      .then(res => {
+        if (res && !res.error) {
+          setEventos(res);
+          setSyncStatus('ok');
+        } else {
+          setSyncStatus('error');
+        }
+        setTimeout(() => setSyncStatus(null), 2500);
+      })
+      .catch(() => { setSyncStatus('error'); setTimeout(() => setSyncStatus(null), 2500); });
+  }
+
+  function navegar(dir) {
+    if (view === 'dia') setAnchor(addDays_(anchor, dir));
+    else if (view === 'semana') setAnchor(addDays_(anchor, dir * 7));
+    else setAnchor(new Date(anchor.getFullYear(), anchor.getMonth() + dir, 1));
+  }
+
+  return (
+    <div>
+      <div className="agenda-toolbar">
+        <div className="agenda-views">
+          {['dia', 'semana', 'mes'].map(v => (
+            <button key={v} className={`sub-item ${view === v ? 'active' : ''}`} onClick={() => setView(v)}>{v}</button>
+          ))}
+        </div>
+        <div className="agenda-nav">
+          <button className="ghost" onClick={() => navegar(-1)}>←</button>
+          <button className="ghost" onClick={() => setAnchor(new Date())}>Hoy</button>
+          <button className="ghost" onClick={() => navegar(1)}>→</button>
+          <button className="ghost" onClick={sincronizar} title="Sincronizar con Calendar">
+            {syncStatus === 'cargando' ? '⟳ …' : syncStatus === 'ok' ? '✓ Sincronizado' : syncStatus === 'error' ? '✕ Error' : '⟳ Sincronizar'}
+          </button>
+        </div>
+      </div>
+
+      {!eventos ? <div className="empty">Cargando…</div> :
+        eventos.error ? <div className="integration-error">{eventos.error} — autoriza el acceso a Calendar redesplegando el backend y aceptando el permiso.</div> :
+        view === 'dia' ? <AgendaDia fecha={anchor} eventos={eventos} /> :
+        view === 'semana' ? <AgendaSemana inicio={startOfWeek_(anchor)} eventos={eventos} onDiaClick={d => { setAnchor(d); setView('dia'); }} /> :
+        <AgendaMes anchor={anchor} eventos={eventos} onDiaClick={d => { setAnchor(d); setView('dia'); }} />
+      }
+    </div>
+  );
+}
+
+function AgendaDia({ fecha, eventos }) {
+  const delDia = eventos.filter(e => isSameDay_(new Date(e.inicio), fecha)).sort((a, b) => new Date(a.inicio) - new Date(b.inicio));
+  return (
+    <div>
+      <div className="agenda-day-title">{fecha.toLocaleDateString('es-ES', { weekday: 'long', day: '2-digit', month: 'long' })}</div>
+      {delDia.length === 0 ? <div className="empty">Sin eventos este día.</div> :
+        <div className="log">
+          {delDia.map(ev => (
+            <div key={ev.id} className="entry">
+              <div className="entry-main">
+                <div className="entry-title">{ev.titulo}</div>
+                <div className="entry-meta">
+                  {ev.todoDia ? 'Todo el día' : `${new Date(ev.inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} - ${new Date(ev.fin).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`}
+                  {ev.ubicacion && ` · ${ev.ubicacion}`}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      }
+    </div>
+  );
+}
+
+function AgendaSemana({ inicio, eventos, onDiaClick }) {
+  const dias = Array.from({ length: 7 }, (_, i) => addDays_(inicio, i));
+  return (
+    <div className="agenda-week">
+      {dias.map(dia => {
+        const delDia = eventos.filter(e => isSameDay_(new Date(e.inicio), dia)).sort((a, b) => new Date(a.inicio) - new Date(b.inicio));
+        return (
+          <div key={dia.toISOString()} className="agenda-week-col" onClick={() => onDiaClick(dia)}>
+            <div className="agenda-week-col-header">{dia.toLocaleDateString('es-ES', { weekday: 'short' })}<br />{dia.getDate()}</div>
+            {delDia.length === 0 ? <div className="agenda-week-empty">—</div> :
+              delDia.slice(0, 4).map(ev => (
+                <div key={ev.id} className="agenda-week-event">
+                  {ev.todoDia ? '●' : new Date(ev.inicio).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} {ev.titulo}
+                </div>
+              ))
+            }
+            {delDia.length > 4 && <div className="agenda-week-more">+{delDia.length - 4} más</div>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function AgendaMes({ anchor, eventos, onDiaClick }) {
+  const inicioGrid = startOfWeek_(startOfMonth_(anchor));
+  const dias = Array.from({ length: 42 }, (_, i) => addDays_(inicioGrid, i));
+  const mesActual = anchor.getMonth();
+  const nombresDias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  return (
+    <div>
+      <div className="agenda-month-weekdays">
+        {nombresDias.map(n => <div key={n}>{n}</div>)}
+      </div>
+      <div className="agenda-month">
+        {dias.map(dia => {
+          const delDia = eventos.filter(e => isSameDay_(new Date(e.inicio), dia));
+          const fueraDeMes = dia.getMonth() !== mesActual;
+          return (
+            <div key={dia.toISOString()} className={`agenda-month-cell ${fueraDeMes ? 'fuera' : ''}`} onClick={() => onDiaClick(dia)}>
+              <div className="agenda-month-daynum">{dia.getDate()}</div>
+              {delDia.slice(0, 2).map(ev => <div key={ev.id} className="agenda-month-event">{ev.titulo}</div>)}
+              {delDia.length > 2 && <div className="agenda-month-more">+{delDia.length - 2}</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function CorreoTab() {
+  const [correo, setCorreo] = useState(null);
+  const [busyId, setBusyId] = useState(null);
+
+  function load() {
+    apiCall('gmailDestacados').then(res => setCorreo(res && !res.error ? res : { error: (res && res.message) || 'No se pudo leer el correo.' }));
+  }
+  useEffect(load, []);
+
+  function quitarDestacado(id) {
+    if (busyId) return;
+    setBusyId(id);
+    apiCall('gmailUnstar', { threadId: id }).then(() => { setBusyId(null); load(); });
+  }
+
+  if (!correo) return <div className="empty">Cargando…</div>;
+  if (correo.error) return <div className="integration-error">{correo.error} — autoriza el acceso a Gmail redesplegando el backend y aceptando el permiso.</div>;
+  if (correo.length === 0) return <div className="empty">No tienes correos marcados como Destacados.</div>;
+
+  return (
+    <div className="log">
+      {correo.map(c => (
+        <div key={c.id} className="entry">
+          <a href={c.enlace} target="_blank" rel="noopener" className="entry-main" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <div className="entry-title">{c.asunto}</div>
+            <div className="entry-meta">{c.remitente.split('<')[0].trim()} · {new Date(c.fecha).toLocaleDateString('es-ES')}</div>
+          </a>
+          <div className="entry-actions">
+            {c.noLeido && <span className="chip">no leído</span>}
+            <button className="ghost" disabled={busyId === c.id} onClick={() => quitarDestacado(c.id)}>{busyId === c.id ? '…' : 'Quitar destacado'}</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TareasTab({ compact }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ titulo: '', categoria: '', proyecto: '', prioridad: 'media', fecha_limite: '' });
+  const [filtroProyecto, setFiltroProyecto] = useState('');
+  const [dragOverCol, setDragOverCol] = useState(null);
+  const [adding, setAdding] = useState(false);
+  const [busyCardId, setBusyCardId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+
+  function load() {
+    setLoading(true);
+    apiCall('list', { sheet: 'Tareas' }).then(res => { setItems(Array.isArray(res) ? res : []); setLoading(false); });
+  }
+  useEffect(load, []);
+
+  function addTarea(e) {
+    e.preventDefault();
+    if (!form.titulo || adding) return;
+    setAdding(true);
+    apiCall('create', { sheet: 'Tareas', data: { ...form, estado: 'pendiente' } }).then(() => {
+      setForm({ titulo: '', categoria: '', proyecto: '', prioridad: 'media', fecha_limite: '' });
+      setAdding(false);
+      setShowForm(false);
+      load();
+    });
+  }
+
+  function moveTask(id, nuevoEstado) {
+    if (busyCardId) return;
+    setBusyCardId(id);
+    apiCall('update', { sheet: 'Tareas', data: { id, estado: nuevoEstado } }).then(() => { setBusyCardId(null); load(); });
+  }
+
+  function remove(id) {
+    if (busyCardId) return;
+    setBusyCardId(id);
+    apiCall('delete', { sheet: 'Tareas', id }).then(() => { setBusyCardId(null); load(); });
+  }
+
+  const proyectos = [...new Set(items.map(it => it.proyecto).filter(Boolean))];
+  const visibles = filtroProyecto ? items.filter(it => it.proyecto === filtroProyecto) : items;
+  const maxPorColumna = compact ? 3 : Infinity;
+
+  if (loading) return <div className="empty">Cargando…</div>;
+
+  return (
+    <div>
+      {!compact && (
+        <React.Fragment>
+          <button className={`add-toggle-btn ${showForm ? 'cancel' : ''}`} onClick={() => setShowForm(!showForm)}>
+            {showForm ? 'Cancelar' : '+ Añadir tarea'}
+          </button>
+
+          {showForm && (
+            <form className="entry-form" onSubmit={addTarea}>
+              <input className="full" placeholder="Título de la tarea" value={form.titulo}
+                onChange={e => setForm({ ...form, titulo: e.target.value })} />
+              <input list="proyectos-list" placeholder="Proyecto (opcional)" value={form.proyecto}
+                onChange={e => setForm({ ...form, proyecto: e.target.value })} />
+              <datalist id="proyectos-list">
+                {proyectos.map(p => <option key={p} value={p} />)}
+              </datalist>
+              <select value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })}>
+                <option value="">Sin categoría</option>
+                {CATEGORIAS_TAREAS.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <select value={form.prioridad} onChange={e => setForm({ ...form, prioridad: e.target.value })}>
+                <option value="baja">Prioridad baja</option>
+                <option value="media">Prioridad media</option>
+                <option value="alta">Prioridad alta</option>
+              </select>
+              <input type="date" value={form.fecha_limite} onChange={e => setForm({ ...form, fecha_limite: e.target.value })} />
+              <button type="submit" disabled={adding}>{adding ? 'Añadiendo…' : 'Añadir tarea'}</button>
+            </form>
+          )}
+
+          {proyectos.length > 0 && (
+            <div className="kanban-toolbar">
+              <select value={filtroProyecto} onChange={e => setFiltroProyecto(e.target.value)}>
+                <option value="">Todos los proyectos</option>
+                {proyectos.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+          )}
+        </React.Fragment>
+      )}
+
+      <div className="kanban-board">
+        {KANBAN_COLUMNS.map(col => {
+          const cardsAll = visibles.filter(it => (it.estado || 'pendiente') === col.key);
+          const cards = cardsAll.slice(0, maxPorColumna);
+          return (
+            <div key={col.key}
+              className={`kanban-col ${dragOverCol === col.key ? 'drag-over' : ''}`}
+              onDragOver={e => { e.preventDefault(); setDragOverCol(col.key); }}
+              onDragLeave={() => setDragOverCol(null)}
+              onDrop={e => {
+                e.preventDefault();
+                const id = e.dataTransfer.getData('text/plain');
+                setDragOverCol(null);
+                if (id) moveTask(id, col.key);
+              }}>
+              <div className="kanban-col-header">
+                <span>{col.label}</span>
+                <span className="kanban-col-count">{cardsAll.length}</span>
+              </div>
+              <div className="kanban-cards">
+                {cards.map(it => {
+                  const busy = busyCardId === it.id;
+                  return (
+                    <div key={it.id} className={`kanban-card ${busy ? 'busy' : ''}`} draggable={!busy}
+                      onDragStart={e => e.dataTransfer.setData('text/plain', it.id)}>
+                      <div className="kanban-card-title">{it.titulo}</div>
+                      <div className="kanban-card-meta">
+                        {it.proyecto && <span className="chip">{it.proyecto}</span>}
+                        {it.prioridad && <span className={`chip ${it.prioridad === 'alta' ? 'prioridad-alta' : ''}`}>{it.prioridad}</span>}
+                        {it.fecha_limite && <span className="chip">{it.fecha_limite}</span>}
+                      </div>
+                      {!compact && (
+                        <div className="kanban-card-actions">
+                          {KANBAN_COLUMNS.filter(c => c.key !== col.key).map(c => (
+                            <button key={c.key} className="ghost" disabled={busy} onClick={() => moveTask(it.id, c.key)}>
+                              {busy ? '…' : `→ ${c.label}`}
+                            </button>
+                          ))}
+                          <button className="ghost" disabled={busy} onClick={() => remove(it.id)}>{busy ? '…' : 'Borrar'}</button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                {cardsAll.length === 0 && <div className="empty" style={{ padding: '10px 0' }}>Vacío</div>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function MetasTab() {
+  const [metas, setMetas] = useState([]);
+  const [hitos, setHitos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState(null);
+  const [form, setForm] = useState({ titulo: '', categoria: '', fecha_objetivo: '', nota: '' });
+  const [hitoForm, setHitoForm] = useState({});
+  const [adding, setAdding] = useState(false);
+  const [busyMetaId, setBusyMetaId] = useState(null);
+  const [busyHitoId, setBusyHitoId] = useState(null);
+  const [addingHitoFor, setAddingHitoFor] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+
+  function load() {
+    setLoading(true);
+    Promise.all([
+      apiCall('list', { sheet: 'Metas' }),
+      apiCall('list', { sheet: 'Hitos_Metas' }),
+    ]).then(([m, h]) => { setMetas(Array.isArray(m) ? m : []); setHitos(Array.isArray(h) ? h : []); setLoading(false); });
+  }
+  useEffect(load, []);
+
+  function addMeta(e) {
+    e.preventDefault();
+    if (!form.titulo || adding) return;
+    setAdding(true);
+    apiCall('create', { sheet: 'Metas', data: { ...form, estado: 'en_curso', progreso_pct: 0 } }).then(() => {
+      setForm({ titulo: '', categoria: '', fecha_objetivo: '', nota: '' });
+      setAdding(false);
+      setShowForm(false);
+      load();
+    });
+  }
+
+  function removeMeta(id) {
+    if (busyMetaId) return;
+    setBusyMetaId(id);
+    apiCall('delete', { sheet: 'Metas', id }).then(() => { setBusyMetaId(null); load(); });
+  }
+
+  function hitosDe(metaId) { return hitos.filter(h => h.meta_id === metaId); }
+
+  function progresoDe(metaId, meta) {
+    const propios = hitosDe(metaId);
+    if (propios.length === 0) return parseFloat(meta.progreso_pct) || 0;
+    const completados = propios.filter(h => h.completado === true || h.completado === 'true').length;
+    return Math.round((completados / propios.length) * 100);
+  }
+
+  function addHito(metaId) {
+    const titulo = (hitoForm[metaId] || {}).titulo;
+    if (!titulo || addingHitoFor === metaId) return;
+    setAddingHitoFor(metaId);
+    const fecha = (hitoForm[metaId] || {}).fecha_objetivo || '';
+    apiCall('create', { sheet: 'Hitos_Metas', data: { meta_id: metaId, titulo, fecha_objetivo: fecha, completado: false } }).then(() => {
+      setHitoForm({ ...hitoForm, [metaId]: { titulo: '', fecha_objetivo: '' } });
+      setAddingHitoFor(null);
+      load();
+    });
+  }
+
+  function toggleHito(hito) {
+    if (busyHitoId) return;
+    setBusyHitoId(hito.id);
+    apiCall('update', { sheet: 'Hitos_Metas', data: { id: hito.id, completado: !(hito.completado === true || hito.completado === 'true') } }).then(() => { setBusyHitoId(null); load(); });
+  }
+
+  function removeHito(id) {
+    if (busyHitoId) return;
+    setBusyHitoId(id);
+    apiCall('delete', { sheet: 'Hitos_Metas', id }).then(() => { setBusyHitoId(null); load(); });
+  }
+
+  return (
+    <div>
+      <button className={`add-toggle-btn ${showForm ? 'cancel' : ''}`} onClick={() => setShowForm(!showForm)}>
+        {showForm ? 'Cancelar' : '+ Añadir meta'}
+      </button>
+
+      {showForm && (
+        <form className="entry-form" onSubmit={addMeta}>
+          <input className="full" placeholder="Título de la meta" value={form.titulo}
+            onChange={e => setForm({ ...form, titulo: e.target.value })} />
+          <input placeholder="Categoría" value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })} />
+          <input type="date" value={form.fecha_objetivo} onChange={e => setForm({ ...form, fecha_objetivo: e.target.value })} />
+          <input className="full" placeholder="Nota (opcional)" value={form.nota} onChange={e => setForm({ ...form, nota: e.target.value })} />
+          <button type="submit" disabled={adding}>{adding ? 'Añadiendo…' : 'Añadir meta'}</button>
+        </form>
+      )}
+
+      {loading ? <div className="empty">Cargando…</div> :
+        metas.length === 0 ? <div className="empty">Sin metas registradas.</div> :
+        metas.map(m => {
+          const isOpen = expandedId === m.id;
+          const propios = hitosDe(m.id);
+          const progreso = progresoDe(m.id, m);
+          const metaBusy = busyMetaId === m.id;
+          return (
+            <div key={m.id} className="meta-row">
+              <div className="meta-row-top">
+                <span className="meta-title" onClick={() => setExpandedId(isOpen ? null : m.id)}>
+                  {isOpen ? '▾' : '▸'} {m.titulo}
+                </span>
+                <span className="entry-meta">{progreso}% {propios.length > 0 && `· ${propios.filter(h => h.completado === true || h.completado === 'true').length}/${propios.length} hitos`}</span>
+              </div>
+              <div className="progress-bar"><div className="progress-fill" style={{ width: `${Math.min(100, progreso)}%` }}></div></div>
+
+              {isOpen && (
+                <div className="hitos-list">
+                  {propios.length === 0 && <div className="empty" style={{ padding: '4px 0' }}>Sin hitos todavía.</div>}
+                  {propios.map(h => {
+                    const hitoBusy = busyHitoId === h.id;
+                    return (
+                      <div key={h.id} className={`hito-row ${(h.completado === true || h.completado === 'true') ? 'completado' : ''}`}>
+                        <input type="checkbox" checked={h.completado === true || h.completado === 'true'} disabled={hitoBusy} onChange={() => toggleHito(h)} />
+                        <span className="hito-title">{h.titulo}</span>
+                        {h.fecha_objetivo && <span className="entry-meta">{h.fecha_objetivo}</span>}
+                        <button className="ghost" disabled={hitoBusy} onClick={() => removeHito(h.id)}>{hitoBusy ? '…' : 'Borrar'}</button>
+                      </div>
+                    );
+                  })}
+                  <div className="hito-add">
+                    <input placeholder="Nuevo hito" value={(hitoForm[m.id] || {}).titulo || ''}
+                      onChange={e => setHitoForm({ ...hitoForm, [m.id]: { ...(hitoForm[m.id] || {}), titulo: e.target.value } })} />
+                    <input type="date" style={{ maxWidth: 140 }} value={(hitoForm[m.id] || {}).fecha_objetivo || ''}
+                      onChange={e => setHitoForm({ ...hitoForm, [m.id]: { ...(hitoForm[m.id] || {}), fecha_objetivo: e.target.value } })} />
+                    <button disabled={addingHitoFor === m.id} onClick={() => addHito(m.id)}>{addingHitoFor === m.id ? '…' : 'Añadir'}</button>
+                  </div>
+                  <div style={{ textAlign: 'right', marginTop: 6 }}>
+                    <button className="ghost" disabled={metaBusy} onClick={() => removeMeta(m.id)}>{metaBusy ? '…' : 'Borrar meta'}</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })
+      }
+    </div>
+  );
+}
+
+function CuentasBancariasTab() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ nombre: '', banco: '', tipo: 'corriente', dia_relave_desde: '', dia_relave_hasta: '', saldo_manual: '', fecha_saldo_manual: '', nota: '' });
+  const [adding, setAdding] = useState(false);
+  const [busyId, setBusyId] = useState(null);
+  const [uploadingId, setUploadingId] = useState(null);
+  const [textoExtraido, setTextoExtraido] = useState({});
+  const [showForm, setShowForm] = useState(false);
+  const [expandedId, setExpandedId] = useState(null);
+  const [historialAbiertoId, setHistorialAbiertoId] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [releves, setReleves] = useState([]);
+  const [saldos, setSaldos] = useState([]);
+  const [movimientosCuentas, setMovimientosCuentas] = useState([]);
+  const [montoSaldo, setMontoSaldo] = useState({});
+  const [registrandoSaldo, setRegistrandoSaldo] = useState(null);
+
+  function load() {
+    setLoading(true);
+    apiCall('list', { sheet: 'Cuentas_Bancarias' }).then(res => { setItems(Array.isArray(res) ? res : []); setLoading(false); });
+    apiCall('list', { sheet: 'Releves_Subidos' }).then(res => setReleves(Array.isArray(res) ? res : []));
+    apiCall('list', { sheet: 'Saldos_Registrados' }).then(res => setSaldos(Array.isArray(res) ? res : []));
+    apiCall('list', { sheet: 'Transacciones' }).then(res => setMovimientosCuentas(Array.isArray(res) ? res : []));
+  }
+  useEffect(load, []);
+
+  function registrarSaldo(cuentaId) {
+    const monto = montoSaldo[cuentaId];
+    if (!monto || registrandoSaldo) return;
+    setRegistrandoSaldo(cuentaId);
+    apiCall('create', { sheet: 'Saldos_Registrados', data: { cuenta_id: cuentaId, saldo: monto, nota: '' } }).then(() => {
+      setMontoSaldo({ ...montoSaldo, [cuentaId]: '' });
+      setRegistrandoSaldo(null);
+      load();
+    });
+  }
+
+  function calcularVerificacionSaldos(cuentaNombre, saldosCuenta) {
+    const ordenados = saldosCuenta.slice().sort((a, b) => new Date(a.fecha_registro) - new Date(b.fecha_registro));
+    return ordenados.map((s, idx) => {
+      if (idx === 0) return { ...s, verif: null };
+      const anterior = ordenados[idx - 1];
+      const movs = movimientosCuentas.filter(m => m.cuenta === cuentaNombre && m.fecha > anterior.fecha_registro && m.fecha <= s.fecha_registro);
+      const cambio = movs.reduce((acc, m) => {
+        const monto = parseFloat(m.monto) || 0;
+        if (m.tipo === 'ingreso') return acc + monto;
+        if (m.tipo === 'gasto') return acc - monto;
+        if (m.tipo === 'transferencia') return acc + (m.direccion === 'entrada' ? monto : -monto);
+        return acc;
+      }, 0);
+      const calculado = Math.round((parseFloat(anterior.saldo) + cambio) * 100) / 100;
+      const coincide = Math.abs(calculado - parseFloat(s.saldo)) < 0.5;
+      return { ...s, verif: { calculado, coincide } };
+    });
+  }
+
+  function addCuenta(e) {
+    e.preventDefault();
+    if (!form.nombre || adding) return;
+    setAdding(true);
+    apiCall('create', { sheet: 'Cuentas_Bancarias', data: form }).then(() => {
+      setForm({ nombre: '', banco: '', tipo: 'corriente', dia_relave_desde: '', dia_relave_hasta: '', saldo_manual: '', fecha_saldo_manual: '', nota: '' });
+      setAdding(false);
+      setShowForm(false);
+      load();
+    });
+  }
+
+  function remove(id) {
+    if (busyId) return;
+    setBusyId(id);
+    apiCall('delete', { sheet: 'Cuentas_Bancarias', id }).then(() => { setBusyId(null); load(); });
+  }
+
+  function abrirCuenta(it) {
+    if (expandedId === it.id) { setExpandedId(null); return; }
+    setExpandedId(it.id);
+    setEditForm({ nombre: it.nombre, banco: it.banco, tipo: it.tipo, dia_relave_desde: it.dia_relave_desde, dia_relave_hasta: it.dia_relave_hasta, saldo_manual: it.saldo_manual, fecha_saldo_manual: it.fecha_saldo_manual, nota: it.nota });
+  }
+
+  function guardarEdicion(id) {
+    setSavingEdit(true);
+    apiCall('update', { sheet: 'Cuentas_Bancarias', data: { id, ...editForm } }).then(() => { setSavingEdit(false); load(); });
+  }
+
+  function subirArchivo(cuentaId, file, forzar) {
+    if (!file) return;
+    setUploadingId(cuentaId);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result.split(',')[1];
+      apiCall('subirReleve', { cuentaId, filename: file.name, mimeType: file.type, base64, forzar: !!forzar }).then(res => {
+        setUploadingId(null);
+        if (res && res.error === 'mes_ya_subido') {
+          const meses = ['', 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+          const [anio, mesNum] = res.mesDetectado.split('-');
+          const nombreMes = meses[parseInt(mesNum, 10)] + ' ' + anio;
+          const confirmar = window.confirm(`Ya hay un relevé subido para ${nombreMes} en esta cuenta (${res.releveExistente.movimientos_importados} movimientos). ¿Subir de todas formas? (se añadirá como un relevé más, sin borrar el anterior)`);
+          if (confirmar) subirArchivo(cuentaId, file, true);
+          return;
+        }
+        if (res && !res.error) {
+          const nuevasSusc = res.nuevasSuscripciones && res.nuevasSuscripciones.length
+            ? ` · nuevas suscripciones detectadas: ${res.nuevasSuscripciones.join(', ')}`
+            : '';
+          const v = res.verificacion;
+          const verifTexto = v
+            ? ` · saldo ${v.soldeInicial.toFixed(2)}€ → ${v.soldeFinal.toFixed(2)}€ ${v.coincide ? '✓ cuadra' : '✕ NO cuadra (calculado ' + v.calculado.toFixed(2) + '€)'}`
+            : '';
+          let diagTexto = '';
+          if (res.movimientosImportados === 0 && res.diagnostico) {
+            const d = res.diagnostico;
+            diagTexto = `\nDIAGNÓSTICO — banco registrado: "${d.bancoRegistrado}" · líneas totales: ${d.totalLineas} · líneas tipo transacción Bourso: ${d.lineasTransaccionBourso} · líneas fecha sola BNP: ${d.lineasFechaSolaBNP} · líneas fecha sola Bourso: ${d.lineasFechaSolaBourso} · líneas monto: ${d.lineasMonto}`;
+          }
+          setTextoExtraido({
+            ...textoExtraido,
+            [cuentaId]: {
+              resumen: `✓ ${res.movimientosImportados} movimientos importados (${res.mesDetectado || 'mes no detectado'}) · ${res.totalGastos.toFixed(2)} € gastos · ${res.totalIngresos.toFixed(2)} € ingresos${nuevasSusc}${verifTexto}${diagTexto}`,
+              texto: res.texto,
+            },
+          });
+          load();
+        } else {
+          setTextoExtraido({ ...textoExtraido, [cuentaId]: { resumen: 'Error: ' + ((res && res.message) || 'no se pudo procesar el archivo.'), texto: '' } });
+        }
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <div>
+      <button className={`add-toggle-btn ${showForm ? 'cancel' : ''}`} onClick={() => setShowForm(!showForm)}>
+        {showForm ? 'Cancelar' : '+ Añadir cuenta'}
+      </button>
+
+      {showForm && (
+        <form className="entry-form" onSubmit={addCuenta}>
+          <input placeholder="Nombre de la cuenta" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} />
+          <input placeholder="Banco" value={form.banco} onChange={e => setForm({ ...form, banco: e.target.value })} />
+          <select value={form.tipo} onChange={e => setForm({ ...form, tipo: e.target.value })}>
+            <option value="corriente">Corriente</option>
+            <option value="ahorro">Ahorro</option>
+          </select>
+          <input type="number" min="1" max="31" placeholder="Día relevé desde" value={form.dia_relave_desde} onChange={e => setForm({ ...form, dia_relave_desde: e.target.value })} />
+          <input type="number" min="1" max="31" placeholder="Día relevé hasta" value={form.dia_relave_hasta} onChange={e => setForm({ ...form, dia_relave_hasta: e.target.value })} />
+          <input className="full" placeholder="Nota (opcional)" value={form.nota} onChange={e => setForm({ ...form, nota: e.target.value })} />
+          <button type="submit" disabled={adding}>{adding ? 'Añadiendo…' : 'Añadir cuenta'}</button>
+        </form>
+      )}
+
+      {loading ? <div className="empty">Cargando…</div> :
+        items.length === 0 ? <div className="empty">Sin cuentas registradas.</div> :
+        items.map(it => {
+          const isOpen = expandedId === it.id;
+          const historialAbierto = historialAbiertoId === it.id;
+          const relevesCuenta = releves.filter(r => r.cuenta_id === it.id).sort((a, b) => new Date(b.fecha_subida) - new Date(a.fecha_subida));
+          return (
+            <div key={it.id} className="account-row">
+              <div className="account-row-top">
+                <div className="entry-main">
+                  <div className="entry-title">{it.nombre} {it.banco && `· ${it.banco}`}</div>
+                  <div className="entry-meta">
+                    {it.tipo} · relevé esperado días {it.dia_relave_desde || '?'}-{it.dia_relave_hasta || '?'} · último subido: {it.ultima_fecha_relave || 'nunca'} · {relevesCuenta.length} relevé(s) en historial
+                    {it.saldo_manual !== '' && it.saldo_manual !== undefined && (
+                      <React.Fragment><br />Saldo conocido: {parseFloat(it.saldo_manual).toFixed(2)} € (al {it.fecha_saldo_manual || '?'})</React.Fragment>
+                    )}
+                  </div>
+                </div>
+                <div className="entry-actions">
+                  <button className="ghost" onClick={() => setHistorialAbiertoId(historialAbierto ? null : it.id)}>{historialAbierto ? 'Cerrar historial' : 'Historial'}</button>
+                  <button className="ghost" onClick={() => abrirCuenta(it)}>{isOpen ? 'Cerrar edición' : 'Editar'}</button>
+                  <button className="ghost" disabled={busyId === it.id} onClick={() => remove(it.id)}>{busyId === it.id ? '…' : 'Borrar'}</button>
+                </div>
+              </div>
+
+              <div className="account-upload" style={{ marginTop: 10 }}>
+                <input type="file" accept="application/pdf,image/*" disabled={uploadingId === it.id}
+                  onChange={e => subirArchivo(it.id, e.target.files[0])} />
+                {uploadingId === it.id && <span className="entry-meta">Procesando…</span>}
+              </div>
+
+              <div className="account-upload" style={{ marginTop: 8 }}>
+                <input type="number" step="0.01" placeholder="Registrar saldo actual (€)" style={{ maxWidth: 200 }}
+                  value={montoSaldo[it.id] || ''} onChange={e => setMontoSaldo({ ...montoSaldo, [it.id]: e.target.value })} />
+                <button className="ghost" disabled={registrandoSaldo === it.id} onClick={() => registrarSaldo(it.id)}>
+                  {registrandoSaldo === it.id ? 'Guardando…' : '+ Registrar saldo de hoy'}
+                </button>
+              </div>
+
+              {textoExtraido[it.id] && (
+                <div style={{ marginTop: 8 }}>
+                  <div className="entry-meta" style={{ color: 'var(--accent)', whiteSpace: 'pre-wrap' }}>{textoExtraido[it.id].resumen}</div>
+                  {textoExtraido[it.id].texto && (
+                    <details>
+                      <summary className="entry-meta" style={{ cursor: 'pointer' }}>Ver texto completo extraído</summary>
+                      <div className="ocr-preview">{textoExtraido[it.id].texto}</div>
+                    </details>
+                  )}
+                </div>
+              )}
+
+              {isOpen && (
+                <div className="account-row-editform">
+                  <input placeholder="Nombre" value={editForm.nombre || ''} onChange={e => setEditForm({ ...editForm, nombre: e.target.value })} />
+                  <input placeholder="Banco" value={editForm.banco || ''} onChange={e => setEditForm({ ...editForm, banco: e.target.value })} />
+                  <select value={editForm.tipo || 'corriente'} onChange={e => setEditForm({ ...editForm, tipo: e.target.value })}>
+                    <option value="corriente">Corriente</option>
+                    <option value="ahorro">Ahorro</option>
+                  </select>
+                  <div></div>
+                  <input type="number" min="1" max="31" placeholder="Día relevé desde" value={editForm.dia_relave_desde || ''} onChange={e => setEditForm({ ...editForm, dia_relave_desde: e.target.value })} />
+                  <input type="number" min="1" max="31" placeholder="Día relevé hasta" value={editForm.dia_relave_hasta || ''} onChange={e => setEditForm({ ...editForm, dia_relave_hasta: e.target.value })} />
+                  <input className="full" placeholder="Nota" value={editForm.nota || ''} onChange={e => setEditForm({ ...editForm, nota: e.target.value })} />
+                  <button disabled={savingEdit} onClick={() => guardarEdicion(it.id)}>{savingEdit ? 'Guardando…' : 'Guardar cambios'}</button>
+                </div>
+              )}
+
+              {historialAbierto && (
+                <React.Fragment>
+                  <div className="releve-history">
+                    <div className="entry-meta">Histórico de saldos registrados</div>
+                    {(() => {
+                      const saldosCuenta = saldos.filter(s => s.cuenta_id === it.id);
+                      if (saldosCuenta.length === 0) return <div className="empty" style={{ padding: '6px 0' }}>Ninguno todavía.</div>;
+                      const conVerif = calcularVerificacionSaldos(it.nombre, saldosCuenta);
+                      return conVerif.slice().reverse().map(s => (
+                        <div key={s.id} className={`releve-history-item ${s.verif && !s.verif.coincide ? 'no-coincide' : ''}`}>
+                          <span>{s.fecha_registro}</span>
+                          <span>{parseFloat(s.saldo).toFixed(2)}€ {s.verif ? (s.verif.coincide ? '✓ cuadra con movimientos' : `✕ esperado ${s.verif.calculado.toFixed(2)}€`) : ''}</span>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+
+                  <div className="releve-history">
+                    <div className="entry-meta">Meses del año con relevé subido</div>
+                    <div className="mes-grid">
+                      {['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'].map((nombreMes, idx) => {
+                        const anioActual = new Date().getFullYear();
+                        const claveMes = anioActual + '-' + String(idx + 1).padStart(2, '0');
+                        const subido = relevesCuenta.some(r => String(r.mes).slice(0, 7) === claveMes);
+                        return (
+                          <div key={idx} className={`mes-chip ${subido ? 'subido' : ''}`} title={subido ? `Relevé de ${nombreMes} ${anioActual} subido` : `Sin relevé de ${nombreMes} ${anioActual}`}>
+                            {nombreMes}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="releve-history">
+                    <div className="entry-meta">Historial de relevés subidos</div>
+                    {relevesCuenta.length === 0 ? <div className="empty" style={{ padding: '6px 0' }}>Ninguno todavía.</div> :
+                      relevesCuenta.map(r => (
+                        <div key={r.id} className={`releve-history-item ${r.coincide === false || r.coincide === 'false' ? 'no-coincide' : ''}`}>
+                          <span>{r.mes || r.periodo || new Date(r.fecha_subida).toLocaleDateString('es-ES')} · {r.movimientos_importados} mov.</span>
+                          <span>{parseFloat(r.total_gastos || 0).toFixed(2)}€ gastos · {parseFloat(r.total_ingresos || 0).toFixed(2)}€ ingresos {r.coincide === false || r.coincide === 'false' ? '✕' : r.saldo_final !== '' ? '✓' : ''}</span>
+                        </div>
+                      ))
+                    }
+                  </div>
+                </React.Fragment>
+              )}
+            </div>
+          );
+        })
+      }
+    </div>
+  );
+}
+
+function SuscripcionesTab() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ nombre: '', categoria: '', monto: '', frecuencia: 'mensual', fecha_proximo_cobro: '', metodo_pago: '' });
+  const [adding, setAdding] = useState(false);
+  const [busyId, setBusyId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+
+  function load() {
+    setLoading(true);
+    apiCall('list', { sheet: 'Suscripciones' }).then(res => { setItems(Array.isArray(res) ? res : []); setLoading(false); });
+  }
+  useEffect(load, []);
+
+  function addSuscripcion(e) {
+    e.preventDefault();
+    if (!form.nombre || adding) return;
+    setAdding(true);
+    apiCall('create', { sheet: 'Suscripciones', data: { ...form, estado: 'activa' } }).then(() => {
+      setForm({ nombre: '', categoria: '', monto: '', frecuencia: 'mensual', fecha_proximo_cobro: '', metodo_pago: '' });
+      setAdding(false);
+      setShowForm(false);
+      load();
+    });
+  }
+
+  function confirmar(id) {
+    if (busyId) return;
+    setBusyId(id);
+    apiCall('update', { sheet: 'Suscripciones', data: { id, estado: 'activa' } }).then(() => { setBusyId(null); load(); });
+  }
+
+  function rechazar(id) {
+    if (busyId) return;
+    setBusyId(id);
+    apiCall('delete', { sheet: 'Suscripciones', id }).then(() => { setBusyId(null); load(); });
+  }
+
+  function remove(id) {
+    if (busyId) return;
+    setBusyId(id);
+    apiCall('delete', { sheet: 'Suscripciones', id }).then(() => { setBusyId(null); load(); });
+  }
+
+  const pendientes = items.filter(it => it.estado === 'pendiente_confirmacion');
+  const confirmadas = items.filter(it => it.estado !== 'pendiente_confirmacion');
+
+  return (
+    <div>
+      {pendientes.length > 0 && (
+        <div className="resumen-section" style={{ marginBottom: 20 }}>
+          <div className="entry-meta" style={{ color: 'var(--ochre, var(--red))', marginBottom: 8 }}>
+            ⚠ {pendientes.length} suscripción(es) detectada(s) automáticamente — confirma o rechaza cada una
+          </div>
+          <div className="log">
+            {pendientes.map(it => (
+              <div key={it.id} className="entry">
+                <div className="entry-main">
+                  <div className="entry-title">{it.nombre}</div>
+                  <div className="entry-meta">{parseFloat(it.monto || 0).toFixed(2)} € · {it.frecuencia}</div>
+                </div>
+                <div className="entry-actions">
+                  <button disabled={busyId === it.id} onClick={() => confirmar(it.id)}>{busyId === it.id ? '…' : 'Confirmar'}</button>
+                  <button className="ghost" disabled={busyId === it.id} onClick={() => rechazar(it.id)}>Rechazar</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <button className={`add-toggle-btn ${showForm ? 'cancel' : ''}`} onClick={() => setShowForm(!showForm)}>
+        {showForm ? 'Cancelar' : '+ Añadir suscripción'}
+      </button>
+
+      {showForm && (
+        <form className="entry-form" onSubmit={addSuscripcion}>
+          <input placeholder="Nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} />
+          <input placeholder="Categoría" value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })} />
+          <input type="number" step="0.01" placeholder="Monto" value={form.monto} onChange={e => setForm({ ...form, monto: e.target.value })} />
+          <select value={form.frecuencia} onChange={e => setForm({ ...form, frecuencia: e.target.value })}>
+            <option value="mensual">Mensual</option>
+            <option value="anual">Anual</option>
+          </select>
+          <input type="date" value={form.fecha_proximo_cobro} onChange={e => setForm({ ...form, fecha_proximo_cobro: e.target.value })} />
+          <input placeholder="Método de pago" value={form.metodo_pago} onChange={e => setForm({ ...form, metodo_pago: e.target.value })} />
+          <button type="submit" disabled={adding}>{adding ? 'Añadiendo…' : 'Añadir suscripción'}</button>
+        </form>
+      )}
+
+      {loading ? <div className="empty">Cargando…</div> :
+        confirmadas.length === 0 ? <div className="empty">Sin suscripciones confirmadas.</div> :
+        <div className="log">
+          {confirmadas.map(it => (
+            <div key={it.id} className="entry">
+              <div className="entry-main">
+                <div className="entry-title">{it.nombre}</div>
+                <div className="entry-meta">{it.categoria || 'sin categoría'} · {parseFloat(it.monto || 0).toFixed(2)} € · {it.frecuencia} · {it.estado}</div>
+              </div>
+              <div className="entry-actions">
+                <button className="ghost" disabled={busyId === it.id} onClick={() => remove(it.id)}>{busyId === it.id ? '…' : 'Borrar'}</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      }
+    </div>
+  );
+}
+
+function CuentasHub() {
+  const [tab, setTab] = useState('cuentas');
+  const configReglas = { key: 'Reglas_Categorizacion', label: 'Reglas', fields: [
+    f('palabra_clave', 'Palabra clave (ej. PAILLAT)'), f('categoria', 'Categoría'), f('subcategoria', 'Subcategoría'),
+  ]};
+  return (
+    <div>
+      <div className="inner-tabs">
+        <button className={`inner-tab ${tab === 'cuentas' ? 'active' : ''}`} onClick={() => setTab('cuentas')}>Cuentas</button>
+        <button className={`inner-tab ${tab === 'movimientos' ? 'active' : ''}`} onClick={() => setTab('movimientos')}>Movimientos</button>
+        <button className={`inner-tab ${tab === 'suscripciones' ? 'active' : ''}`} onClick={() => setTab('suscripciones')}>Suscripciones</button>
+        <button className={`inner-tab ${tab === 'reglas' ? 'active' : ''}`} onClick={() => setTab('reglas')}>Reglas de categorías</button>
+      </div>
+      {tab === 'cuentas' ? <CuentasBancariasTab /> :
+        tab === 'movimientos' ? <TransaccionesTab /> :
+        tab === 'suscripciones' ? <SuscripcionesTab /> :
+        <GenericTab config={configReglas} />}
+    </div>
+  );
+}
+
+function TransaccionesTab() {
+  const [items, setItems] = useState([]);
+  const [cuentas, setCuentas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ tipo: 'gasto', categoria: '', subcategoria: '', monto: '', cuenta: '', nota: '' });
+  const [adding, setAdding] = useState(false);
+  const [busyId, setBusyId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [filtros, setFiltros] = useState({ cuenta: '', categoria: '', mes: '', texto: '' });
+  const [asignando, setAsignando] = useState(null);
+  const [categoriaRapida, setCategoriaRapida] = useState({});
+  const [vinculando, setVinculando] = useState(false);
+  const [resultadoVinculo, setResultadoVinculo] = useState(null);
+  const [sincronizando, setSincronizando] = useState(false);
+  const [resultadoSync, setResultadoSync] = useState(null);
+
+  function vincularTransferencias() {
+    setVinculando(true);
+    apiCall('vincularTransferencias', {}).then(res => {
+      setVinculando(false);
+      if (res && !res.error) {
+        setResultadoVinculo(`✓ ${res.vinculadas} transferencia(s) vinculada(s)${res.pendientesSalida || res.pendientesEntrada ? ` · ${res.pendientesSalida} salida(s) y ${res.pendientesEntrada} entrada(s) sin pareja` : ''}`);
+        load();
+      }
+      setTimeout(() => setResultadoVinculo(null), 6000);
+    });
+  }
+
+  function sincronizarCategorias() {
+    setSincronizando(true);
+    apiCall('sincronizarCategorias', {}).then(res => {
+      setSincronizando(false);
+      if (res && !res.error) {
+        setResultadoSync(`✓ ${res.actualizadas} movimiento(s) recategorizado(s) según tus reglas guardadas`);
+        load();
+      }
+      setTimeout(() => setResultadoSync(null), 6000);
+    });
+  }
+
+
+  function asignarCategoria(it, guardarRegla) {
+    const val = categoriaRapida[it.id];
+    if (!val) return;
+    const [categoria, subcategoria] = val.split('|');
+    setAsignando(it.id);
+    apiCall('update', { sheet: 'Transacciones', data: { id: it.id, categoria, subcategoria: subcategoria || '' } }).then(() => {
+      if (guardarRegla && it.nota) {
+        const palabra = normalizarComercioFrontend_(it.nota);
+        if (palabra) apiCall('create', { sheet: 'Reglas_Categorizacion', data: { palabra_clave: palabra, categoria, subcategoria: subcategoria || '' } });
+      }
+      setAsignando(null);
+      load();
+    });
+  }
+
+  function load() {
+    setLoading(true);
+    apiCall('list', { sheet: 'Transacciones' }).then(res => { setItems(Array.isArray(res) ? res : []); setLoading(false); });
+    apiCall('list', { sheet: 'Cuentas_Bancarias' }).then(res => setCuentas(Array.isArray(res) ? res : []));
+  }
+  useEffect(load, []);
+
+  function addTransaccion(e) {
+    e.preventDefault();
+    if (!form.monto || adding) return;
+    setAdding(true);
+    apiCall('create', { sheet: 'Transacciones', data: { ...form, fecha: new Date().toISOString().slice(0, 10) } }).then(() => {
+      setForm({ tipo: 'gasto', categoria: '', subcategoria: '', monto: '', cuenta: '', nota: '' });
+      setAdding(false);
+      setShowForm(false);
+      load();
+    });
+  }
+
+  function remove(id) {
+    if (busyId) return;
+    setBusyId(id);
+    apiCall('delete', { sheet: 'Transacciones', id }).then(() => { setBusyId(null); load(); });
+  }
+
+  const meses = [...new Set(items.map(it => (it.fecha || '').slice(0, 7)).filter(Boolean))].sort().reverse();
+  const categorias = [...new Set(items.map(it => it.categoria).filter(Boolean))];
+
+  const visibles = items.filter(it => {
+    if (filtros.cuenta && it.cuenta !== filtros.cuenta) return false;
+    if (filtros.categoria && it.categoria !== filtros.categoria) return false;
+    if (filtros.mes && (it.fecha || '').slice(0, 7) !== filtros.mes) return false;
+    if (filtros.texto && !((it.nota || '') + (it.categoria || '')).toLowerCase().includes(filtros.texto.toLowerCase())) return false;
+    return true;
+  }).sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+  // Las transferencias entre tus propias cuentas no cuentan como gasto ni ingreso real
+  const balance = visibles.reduce((acc, it) => {
+    const monto = parseFloat(it.monto) || 0;
+    if (it.tipo === 'ingreso') return acc + monto;
+    if (it.tipo === 'gasto') return acc - monto;
+    return acc;
+  }, 0);
+  const totalTransferencias = visibles.filter(it => it.tipo === 'transferencia').reduce((acc, it) => acc + (parseFloat(it.monto) || 0), 0);
+  const sinCategoria = items.filter(it => !it.categoria && it.tipo !== 'transferencia').length;
+
+  return (
+    <div>
+      <div className="topbar">
+        <span className="entry-meta">Balance (sin transferencias internas)</span>
+        <span className="entry-amount" style={{ color: balance >= 0 ? 'var(--green)' : 'var(--red)' }}>{balance.toFixed(2)} €</span>
+      </div>
+      {totalTransferencias > 0 && (
+        <div className="entry-meta" style={{ marginBottom: 6 }}>Transferencias entre tus cuentas (no contadas): {totalTransferencias.toFixed(2)} €</div>
+      )}
+      {sinCategoria > 0 && (
+        <div className="entry-meta" style={{ marginBottom: 14, color: 'var(--red)' }}>⚠ {sinCategoria} movimiento(s) sin categoría — asígnala abajo en cada uno</div>
+      )}
+
+      <button className={`add-toggle-btn ${showForm ? 'cancel' : ''}`} onClick={() => setShowForm(!showForm)}>
+        {showForm ? 'Cancelar' : '+ Añadir movimiento'}
+      </button>
+      <button className="add-toggle-btn" disabled={vinculando} onClick={vincularTransferencias} style={{ marginLeft: 8 }}>
+        {vinculando ? 'Vinculando…' : '🔗 Vincular transferencias'}
+      </button>
+      <button className="add-toggle-btn" disabled={sincronizando} onClick={sincronizarCategorias} style={{ marginLeft: 8 }}>
+        {sincronizando ? 'Sincronizando…' : '🔄 Sincronizar categorías'}
+      </button>
+      {resultadoVinculo && <div className="entry-meta" style={{ marginTop: 8, color: 'var(--accent)' }}>{resultadoVinculo}</div>}
+      {resultadoSync && <div className="entry-meta" style={{ marginTop: 8, color: 'var(--accent)' }}>{resultadoSync}</div>}
+
+      {showForm && (
+        <form className="entry-form" onSubmit={addTransaccion}>
+          <select value={form.tipo} onChange={e => setForm({ ...form, tipo: e.target.value })}>
+            <option value="gasto">Gasto</option>
+            <option value="ingreso">Ingreso</option>
+            <option value="transferencia">Transferencia entre mis cuentas</option>
+          </select>
+          <input type="number" step="0.01" placeholder="Monto" value={form.monto} onChange={e => setForm({ ...form, monto: e.target.value })} />
+          <select value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value, subcategoria: '' })}>
+            <option value="">Categoría</option>
+            {Object.keys(CATEGORIAS_TRANSACCIONES).map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select value={form.subcategoria} onChange={e => setForm({ ...form, subcategoria: e.target.value })} disabled={!form.categoria}>
+            <option value="">Subcategoría</option>
+            {(CATEGORIAS_TRANSACCIONES[form.categoria] || []).map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select value={form.cuenta} onChange={e => setForm({ ...form, cuenta: e.target.value })}>
+            <option value="">Cuenta</option>
+            {cuentas.map(c => <option key={c.id} value={c.nombre}>{c.nombre}</option>)}
+          </select>
+          <input className="full" placeholder="Nota (opcional)" value={form.nota} onChange={e => setForm({ ...form, nota: e.target.value })} />
+          <button type="submit" disabled={adding}>{adding ? 'Añadiendo…' : 'Añadir movimiento'}</button>
+        </form>
+      )}
+
+      {items.length > 0 && (
+        <div className="entry-form" style={{ marginBottom: 16 }}>
+          <select value={filtros.cuenta} onChange={e => setFiltros({ ...filtros, cuenta: e.target.value })}>
+            <option value="">Todas las cuentas</option>
+            {cuentas.map(c => <option key={c.id} value={c.nombre}>{c.nombre}</option>)}
+          </select>
+          <select value={filtros.categoria} onChange={e => setFiltros({ ...filtros, categoria: e.target.value })}>
+            <option value="">Todas las categorías</option>
+            {categorias.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select value={filtros.mes} onChange={e => setFiltros({ ...filtros, mes: e.target.value })}>
+            <option value="">Todos los meses</option>
+            {meses.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+          <input className="full" placeholder="Buscar en nota/categoría…" value={filtros.texto} onChange={e => setFiltros({ ...filtros, texto: e.target.value })} />
+        </div>
+      )}
+
+      {loading ? <div className="empty">Cargando…</div> :
+        visibles.length === 0 ? <div className="empty">No hay movimientos que coincidan.</div> :
+        <div className="log">
+          {visibles.map((it, i) => (
+            <div key={it.id} className="entry" style={{ flexDirection: !it.categoria && it.tipo !== 'transferencia' ? 'column' : 'row', alignItems: !it.categoria && it.tipo !== 'transferencia' ? 'stretch' : 'flex-start' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                <div className="entry-main">
+                  <div className="entry-title">
+                    {it.tipo === 'transferencia' && '⇄ '}{it.categoria || it.nota || 'Sin categoría'}{it.subcategoria && ` · ${it.subcategoria}`}
+                    {it.tipo === 'transferencia' && (it.vinculo_id ? <span className="chip" style={{ marginLeft: 6 }}>vinculada</span> : <span className="chip" style={{ marginLeft: 6, color: 'var(--ink-faint)' }}>sin vincular</span>)}
+                  </div>
+                  <div className="entry-meta">{it.fecha} · {it.cuenta || 'sin cuenta'} {it.nota && it.categoria && `· ${it.nota.slice(0, 40)}`}</div>
+                </div>
+                <span className="entry-amount" style={{ color: it.tipo === 'ingreso' ? 'var(--green)' : it.tipo === 'gasto' ? 'var(--red)' : 'var(--ink-faint)' }}>
+                  {it.tipo === 'gasto' ? '-' : it.tipo === 'ingreso' ? '+' : '⇄'}{parseFloat(it.monto || 0).toFixed(2)} €
+                </span>
+                <div className="entry-actions">
+                  <button className="ghost" disabled={busyId === it.id} onClick={() => remove(it.id)}>{busyId === it.id ? '…' : 'Borrar'}</button>
+                </div>
+              </div>
+              {!it.categoria && it.tipo !== 'transferencia' && (
+                <div className="account-upload" style={{ marginTop: 8 }}>
+                  <select style={{ maxWidth: 220 }} value={categoriaRapida[it.id] || ''} onChange={e => setCategoriaRapida({ ...categoriaRapida, [it.id]: e.target.value })}>
+                    <option value="">Asignar categoría…</option>
+                    {Object.entries(CATEGORIAS_TRANSACCIONES).map(([cat, subs]) => subs.map(sub => (
+                      <option key={cat + '|' + sub} value={cat + '|' + sub}>{cat} · {sub}</option>
+                    )))}
+                  </select>
+                  <button className="ghost" disabled={asignando === it.id || !categoriaRapida[it.id]} onClick={() => asignarCategoria(it, false)}>Asignar</button>
+                  <button className="ghost" disabled={asignando === it.id || !categoriaRapida[it.id]} onClick={() => asignarCategoria(it, true)}>Asignar y recordar</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      }
+    </div>
+  );
+}
+
+function BolsaHub() {
+  const [tab, setTab] = useState('posiciones');
+  const configMovimientos = MODULES_GENERIC.find(m => m.key === 'Bolsa_Movimientos');
+  const configCuentas = MODULES_GENERIC.find(m => m.key === 'Cuentas_Bolsa');
+  return (
+    <div>
+      <div className="inner-tabs">
+        <button className={`inner-tab ${tab === 'posiciones' ? 'active' : ''}`} onClick={() => setTab('posiciones')}>Posiciones</button>
+        <button className={`inner-tab ${tab === 'movimientos' ? 'active' : ''}`} onClick={() => setTab('movimientos')}>Movimientos</button>
+        <button className={`inner-tab ${tab === 'cuentas' ? 'active' : ''}`} onClick={() => setTab('cuentas')}>Cuentas / Brokers</button>
+      </div>
+      {tab === 'posiciones' ? <BolsaPosicionesTab /> :
+        tab === 'movimientos' ? <GenericTab config={configMovimientos} /> :
+        <GenericTab config={configCuentas} />}
+    </div>
+  );
+}
+
+function PatrimonioHub() {
+  const [tab, setTab] = useState('patrimonio');
+  const configPatrimonio = MODULES_GENERIC.find(m => m.key === 'Patrimonio_Snapshot');
+  const configDeudas = MODULES_GENERIC.find(m => m.key === 'Deudas');
+  const configPagosDeudas = MODULES_GENERIC.find(m => m.key === 'Pagos_Deudas');
+  return (
+    <div>
+      <div className="inner-tabs">
+        <button className={`inner-tab ${tab === 'patrimonio' ? 'active' : ''}`} onClick={() => setTab('patrimonio')}>Patrimonio</button>
+        <button className={`inner-tab ${tab === 'deudas' ? 'active' : ''}`} onClick={() => setTab('deudas')}>Deudas</button>
+        <button className={`inner-tab ${tab === 'pagos' ? 'active' : ''}`} onClick={() => setTab('pagos')}>Pagos de deudas</button>
+      </div>
+      {tab === 'patrimonio' ? <GenericTab config={configPatrimonio} /> :
+        tab === 'deudas' ? <GenericTab config={configDeudas} /> :
+        <GenericTab config={configPagosDeudas} />}
+    </div>
+  );
+}
+
+
+function BolsaPosicionesTab() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [cotizaciones, setCotizaciones] = useState({});
+  const [syncStatus, setSyncStatus] = useState(null);
+  const [cuentasBolsa, setCuentasBolsa] = useState([]);
+  const [form, setForm] = useState({ ticker: '', nombre: '', cantidad: '', precio_promedio_compra: '', moneda: '', cuenta_broker: '' });
+  const [adding, setAdding] = useState(false);
+  const [busyId, setBusyId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+
+  function load() {
+    setLoading(true);
+    apiCall('list', { sheet: 'Bolsa_Posiciones' }).then(res => {
+      const lista = Array.isArray(res) ? res : [];
+      setItems(lista);
+      setLoading(false);
+      cargarCotizaciones(lista);
+    });
+    apiCall('list', { sheet: 'Cuentas_Bolsa' }).then(res => setCuentasBolsa(Array.isArray(res) ? res : []));
+  }
+  useEffect(load, []);
+
+  function cargarCotizaciones(lista) {
+    const tickers = [...new Set(lista.map(it => it.ticker).filter(Boolean))];
+    if (tickers.length === 0) return;
+    setSyncStatus('cargando');
+    apiCall('stockQuotes', { tickers }).then(res => {
+      if (res && !res.error) {
+        setCotizaciones(res);
+        setSyncStatus('ok');
+      } else {
+        setSyncStatus('error');
+      }
+      setTimeout(() => setSyncStatus(null), 2500);
+    });
+  }
+
+  function addPosicion(e) {
+    e.preventDefault();
+    if (!form.ticker || adding) return;
+    setAdding(true);
+    apiCall('create', { sheet: 'Bolsa_Posiciones', data: form }).then(() => {
+      setForm({ ticker: '', nombre: '', cantidad: '', precio_promedio_compra: '', moneda: '', cuenta_broker: '' });
+      setAdding(false);
+      setShowForm(false);
+      load();
+    });
+  }
+
+  function remove(id) {
+    if (busyId) return;
+    setBusyId(id);
+    apiCall('delete', { sheet: 'Bolsa_Posiciones', id }).then(() => { setBusyId(null); load(); });
+  }
+
+  const valorTotal = items.reduce((acc, it) => {
+    const q = cotizaciones[it.ticker];
+    const precio = q ? q.precio : parseFloat(it.precio_promedio_compra) || 0;
+    return acc + precio * (parseFloat(it.cantidad) || 0);
+  }, 0);
+  const gananciaTotal = items.reduce((acc, it) => {
+    const q = cotizaciones[it.ticker];
+    if (!q) return acc;
+    return acc + (q.precio - (parseFloat(it.precio_promedio_compra) || 0)) * (parseFloat(it.cantidad) || 0);
+  }, 0);
+
+  return (
+    <div>
+      <div className="topbar">
+        <span className="entry-meta">Valor total (cotización en vivo)</span>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
+          <span className="entry-amount">{valorTotal.toFixed(2)}</span>
+          <button className="ghost" onClick={() => cargarCotizaciones(items)}>
+            {syncStatus === 'cargando' ? '⟳ …' : syncStatus === 'ok' ? '✓' : syncStatus === 'error' ? '✕ Error' : '⟳ Sincronizar'}
+          </button>
+        </div>
+      </div>
+      <div className="entry-meta" style={{ marginBottom: 16 }}>
+        Ganancia/pérdida no realizada: <span style={{ color: gananciaTotal >= 0 ? 'var(--green)' : 'var(--red)', fontFamily: 'IBM Plex Mono, monospace' }}>{gananciaTotal >= 0 ? '+' : ''}{gananciaTotal.toFixed(2)}</span>
+      </div>
+
+      {items.length > 0 && (
+        <div className="kanban-card-meta" style={{ marginBottom: 16 }}>
+          {[...new Set(items.map(it => it.ticker))].map(t => <span key={t} className="chip">{t}</span>)}
+        </div>
+      )}
+
+      <button className={`add-toggle-btn ${showForm ? 'cancel' : ''}`} onClick={() => setShowForm(!showForm)}>
+        {showForm ? 'Cancelar' : '+ Añadir posición'}
+      </button>
+
+      {showForm && (
+        <form className="entry-form" onSubmit={addPosicion}>
+          <input placeholder="Ticker (ej. AAPL)" value={form.ticker} onChange={e => setForm({ ...form, ticker: e.target.value.toUpperCase() })} />
+          <input placeholder="Nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} />
+          <input type="number" step="0.0001" placeholder="Cantidad" value={form.cantidad} onChange={e => setForm({ ...form, cantidad: e.target.value })} />
+          <input type="number" step="0.01" placeholder="Precio promedio de compra" value={form.precio_promedio_compra} onChange={e => setForm({ ...form, precio_promedio_compra: e.target.value })} />
+          <input placeholder="Moneda" value={form.moneda} onChange={e => setForm({ ...form, moneda: e.target.value })} />
+          <select value={form.cuenta_broker} onChange={e => setForm({ ...form, cuenta_broker: e.target.value })}>
+            <option value="">Cuenta / broker</option>
+            {cuentasBolsa.map(c => <option key={c.id} value={c.nombre}>{c.nombre}</option>)}
+          </select>
+          <button type="submit" disabled={adding}>{adding ? 'Añadiendo…' : 'Añadir posición'}</button>
+        </form>
+      )}
+
+      {loading ? <div className="empty">Cargando…</div> :
+        items.length === 0 ? <div className="empty">Sin posiciones registradas.</div> :
+        <div className="log">
+          {items.map(it => {
+            const q = cotizaciones[it.ticker];
+            const cantidad = parseFloat(it.cantidad) || 0;
+            const compra = parseFloat(it.precio_promedio_compra) || 0;
+            const ganancia = q ? (q.precio - compra) * cantidad : null;
+            return (
+              <div key={it.id} className="entry">
+                <div className="entry-main">
+                  <div className="entry-title">{it.ticker} {it.nombre && `· ${it.nombre}`}</div>
+                  <div className="entry-meta">
+                    {cantidad} uds · compra {compra.toFixed(2)} {it.moneda || ''}
+                    {q ? ` · actual ${q.precio.toFixed(2)} ${q.moneda || ''}` : ' · sin cotización'}
+                  </div>
+                </div>
+                {ganancia !== null && (
+                  <span className="entry-amount" style={{ color: ganancia >= 0 ? 'var(--green)' : 'var(--red)' }}>
+                    {ganancia >= 0 ? '+' : ''}{ganancia.toFixed(2)}
+                  </span>
+                )}
+                <div className="entry-actions">
+                  <button className="ghost" disabled={busyId === it.id} onClick={() => remove(it.id)}>{busyId === it.id ? '…' : 'Borrar'}</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      }
+    </div>
+  );
+}
+
+function normalizarComercioFrontend_(descripcion) {
+  let d = (descripcion === null || descripcion === undefined) ? '' : String(descripcion);
+  d = d.replace(/^CARTE\s+\d{2}[\/.]\d{2}[\/.]?\d{0,4}\s+/i, '');
+  d = d.replace(/\s*CB\*\d+\s*$/i, '');
+  d = d.replace(/\s+\d+\s*$/, '');
+  return d.trim().toUpperCase();
+}
+
+function AnalisisFinancieroTab() {
+  const [movs, setMovs] = useState(null);
+  const [presupuestos, setPresupuestos] = useState([]);
+  const [nuevoPresupuesto, setNuevoPresupuesto] = useState({ categoria: '', monto_objetivo: '' });
+  const [guardandoPresupuesto, setGuardandoPresupuesto] = useState(false);
+  const [busyPresupuestoId, setBusyPresupuestoId] = useState(null);
+
+  function load() {
+    apiCall('list', { sheet: 'Transacciones' }).then(res => setMovs(Array.isArray(res) ? res : []));
+    apiCall('list', { sheet: 'Presupuestos' }).then(res => setPresupuestos(Array.isArray(res) ? res : []));
+  }
+  useEffect(load, []);
+
+  function guardarPresupuesto(e) {
+    e.preventDefault();
+    if (!nuevoPresupuesto.categoria || !nuevoPresupuesto.monto_objetivo || guardandoPresupuesto) return;
+    setGuardandoPresupuesto(true);
+    apiCall('create', { sheet: 'Presupuestos', data: nuevoPresupuesto }).then(() => {
+      setNuevoPresupuesto({ categoria: '', monto_objetivo: '' });
+      setGuardandoPresupuesto(false);
+      load();
+    });
+  }
+
+  function borrarPresupuesto(id) {
+    if (busyPresupuestoId) return;
+    setBusyPresupuestoId(id);
+    apiCall('delete', { sheet: 'Presupuestos', id }).then(() => { setBusyPresupuestoId(null); load(); });
+  }
+
+  if (!movs) return <div className="empty">Cargando…</div>;
+  if (movs.length === 0) return <div className="empty">Sin movimientos registrados todavía — sube un relevé o añade movimientos manualmente.</div>;
+
+  const porMes = {};
+  movs.forEach(m => {
+    const mes = (m.fecha || '').slice(0, 7);
+    if (!mes) return;
+    if (!porMes[mes]) porMes[mes] = { gasto: 0, ingreso: 0 };
+    const monto = parseFloat(m.monto) || 0;
+    if (m.tipo === 'ingreso') porMes[mes].ingreso += monto; else if (m.tipo === 'gasto') porMes[mes].gasto += monto;
+  });
+  const meses = Object.keys(porMes).sort();
+  const maxGasto = Math.max(...meses.map(m => porMes[m].gasto), 1);
+
+  // Balance acumulado mes a mes (línea de tendencia con barras)
+  let acumulado = 0;
+  const balanceAcumulado = meses.map(mes => {
+    acumulado += porMes[mes].ingreso - porMes[mes].gasto;
+    return { mes, valor: acumulado };
+  });
+  const maxAbsAcumulado = Math.max(...balanceAcumulado.map(b => Math.abs(b.valor)), 1);
+
+  // Comparación mes actual vs mes anterior
+  const mesActual = meses[meses.length - 1];
+  const mesAnterior = meses[meses.length - 2];
+  const comparacion = (mesActual && mesAnterior) ? {
+    gastoActual: porMes[mesActual].gasto,
+    gastoAnterior: porMes[mesAnterior].gasto,
+    cambioPct: porMes[mesAnterior].gasto > 0 ? Math.round(((porMes[mesActual].gasto - porMes[mesAnterior].gasto) / porMes[mesAnterior].gasto) * 100) : null,
+  } : null;
+
+  const porComercio = {};
+  movs.filter(m => m.tipo === 'gasto').forEach(m => {
+    const clave = normalizarComercioFrontend_(m.nota) || 'OTRO';
+    porComercio[clave] = (porComercio[clave] || 0) + (parseFloat(m.monto) || 0);
+  });
+  const topComercios = Object.entries(porComercio).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const maxComercio = topComercios.length ? topComercios[0][1] : 1;
+
+  const porCategoria = {};
+  movs.filter(m => m.tipo === 'gasto').forEach(m => {
+    const clave = m.categoria || 'Sin categoría';
+    porCategoria[clave] = (porCategoria[clave] || 0) + (parseFloat(m.monto) || 0);
+  });
+  const topCategorias = Object.entries(porCategoria).sort((a, b) => b[1] - a[1]);
+  const maxCategoria = topCategorias.length ? topCategorias[0][1] : 1;
+  const sinCategoriaCount = movs.filter(m => m.tipo === 'gasto' && !m.categoria).length;
+
+  // Gasto de la categoría, solo en el mes actual, para comparar con el presupuesto
+  const gastoCategoriaMesActual = {};
+  movs.filter(m => m.tipo === 'gasto' && (m.fecha || '').slice(0, 7) === mesActual).forEach(m => {
+    const clave = m.categoria || 'Sin categoría';
+    gastoCategoriaMesActual[clave] = (gastoCategoriaMesActual[clave] || 0) + (parseFloat(m.monto) || 0);
+  });
+
+  return (
+    <div className="dashboard-grid">
+      {comparacion && (
+        <div className="dash-card full">
+          <div className="dash-label">Este mes vs mes anterior</div>
+          <div className="dash-row" style={{ borderTop: 'none' }}>
+            <span>Gasto {mesAnterior} → {mesActual}</span>
+            <span className="entry-meta" style={{ color: comparacion.cambioPct === null ? 'var(--ink-soft)' : comparacion.cambioPct > 0 ? 'var(--red)' : 'var(--green)' }}>
+              {comparacion.gastoAnterior.toFixed(2)} € → {comparacion.gastoActual.toFixed(2)} € {comparacion.cambioPct !== null && `(${comparacion.cambioPct > 0 ? '+' : ''}${comparacion.cambioPct}%)`}
+            </span>
+          </div>
+        </div>
+      )}
+
+      <div className="dash-card full">
+        <div className="dash-label">Presupuesto por categoría ({mesActual || 'mes actual'})</div>
+        <form className="entry-form" onSubmit={guardarPresupuesto} style={{ marginBottom: 14 }}>
+          <select value={nuevoPresupuesto.categoria} onChange={e => setNuevoPresupuesto({ ...nuevoPresupuesto, categoria: e.target.value })}>
+            <option value="">Categoría</option>
+            {Object.keys(CATEGORIAS_TRANSACCIONES).map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <input type="number" step="0.01" placeholder="Objetivo mensual (€)" value={nuevoPresupuesto.monto_objetivo} onChange={e => setNuevoPresupuesto({ ...nuevoPresupuesto, monto_objetivo: e.target.value })} />
+          <button type="submit" disabled={guardandoPresupuesto} className="full">{guardandoPresupuesto ? 'Guardando…' : '+ Definir objetivo'}</button>
+        </form>
+        {presupuestos.length === 0 ? <div className="empty">Sin objetivos de presupuesto definidos.</div> :
+          presupuestos.map(p => {
+            const gastado = gastoCategoriaMesActual[p.categoria] || 0;
+            const objetivo = parseFloat(p.monto_objetivo) || 0;
+            const pct = objetivo > 0 ? Math.round((gastado / objetivo) * 100) : 0;
+            const excedido = gastado > objetivo;
+            return (
+              <div key={p.id} className="meta-row">
+                <div className="meta-row-top">
+                  <span>{p.categoria} <button className="ghost" style={{ marginLeft: 8, padding: '2px 7px', fontSize: 10 }} disabled={busyPresupuestoId === p.id} onClick={() => borrarPresupuesto(p.id)}>{busyPresupuestoId === p.id ? '…' : 'Borrar'}</button></span>
+                  <span className="entry-meta" style={{ color: excedido ? 'var(--red)' : 'var(--ink-soft)' }}>{gastado.toFixed(2)} € / {objetivo.toFixed(2)} € ({pct}%)</span>
+                </div>
+                <div className="progress-bar"><div className="progress-fill" style={{ width: `${Math.min(100, pct)}%`, background: excedido ? 'var(--red)' : 'var(--accent)' }}></div></div>
+              </div>
+            );
+          })
+        }
+      </div>
+
+      <div className="dash-card full">
+        <div className="dash-label">Balance acumulado mes a mes</div>
+        {balanceAcumulado.map(b => (
+          <div key={b.mes} style={{ marginBottom: 10 }}>
+            <div className="dash-row" style={{ borderTop: 'none', paddingBottom: 2 }}>
+              <span>{b.mes}</span><span className="entry-meta" style={{ color: b.valor >= 0 ? 'var(--green)' : 'var(--red)' }}>{b.valor.toFixed(2)} €</span>
+            </div>
+            <div className="progress-bar"><div className="progress-fill" style={{ width: `${(Math.abs(b.valor) / maxAbsAcumulado) * 100}%`, background: b.valor >= 0 ? 'var(--green)' : 'var(--red)' }}></div></div>
+          </div>
+        ))}
+      </div>
+
+      <div className="dash-card full">
+        <div className="dash-label">Gastos e ingresos por mes</div>
+        {meses.map(mes => (
+          <div key={mes} style={{ marginBottom: 12 }}>
+            <div className="dash-row" style={{ borderTop: 'none', paddingBottom: 2 }}>
+              <span>{mes}</span>
+              <span className="entry-meta">gasto {porMes[mes].gasto.toFixed(2)} € · ingreso {porMes[mes].ingreso.toFixed(2)} €</span>
+            </div>
+            <div className="progress-bar"><div className="progress-fill" style={{ width: `${(porMes[mes].gasto / maxGasto) * 100}%`, background: 'var(--red)' }}></div></div>
+          </div>
+        ))}
+      </div>
+      <div className="dash-card full">
+        <div className="dash-label">Gasto por categoría {sinCategoriaCount > 0 && <span style={{ color: 'var(--red)' }}>· {sinCategoriaCount} movimiento(s) sin categoría</span>}</div>
+        {topCategorias.map(([nombre, total]) => (
+          <div key={nombre} style={{ marginBottom: 10 }}>
+            <div className="dash-row" style={{ borderTop: 'none', paddingBottom: 2 }}>
+              <span>{nombre}</span><span className="entry-meta">{total.toFixed(2)} € · {((total / topCategorias.reduce((s, [, v]) => s + v, 0)) * 100).toFixed(0)}%</span>
+            </div>
+            <div className="progress-bar"><div className="progress-fill" style={{ width: `${(total / maxCategoria) * 100}%`, background: nombre === 'Sin categoría' ? 'var(--red)' : 'var(--accent)' }}></div></div>
+          </div>
+        ))}
+      </div>
+      <div className="dash-card full">
+        <div className="dash-label">Top 10 comercios por gasto acumulado</div>
+        {topComercios.map(([nombre, total]) => (
+          <div key={nombre} style={{ marginBottom: 10 }}>
+            <div className="dash-row" style={{ borderTop: 'none', paddingBottom: 2 }}>
+              <span>{nombre}</span><span className="entry-meta">{total.toFixed(2)} €</span>
+            </div>
+            <div className="progress-bar"><div className="progress-fill" style={{ width: `${(total / maxComercio) * 100}%` }}></div></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GenericTab({ config }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [adding, setAdding] = useState(false);
+  const [busyId, setBusyId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+
+  function emptyForm() {
+    const obj = {};
+    config.fields.forEach(field => { obj[field.name] = field.type === 'checkbox' ? false : ''; });
+    return obj;
+  }
+  const [form, setForm] = useState(emptyForm());
+
+  function load() {
+    setLoading(true);
+    apiCall('list', { sheet: config.key }).then(res => { setItems(Array.isArray(res) ? res : []); setLoading(false); });
+  }
+  useEffect(load, [config.key]);
+
+  function add(e) {
+    e.preventDefault();
+    if (adding) return;
+    setAdding(true);
+    apiCall('create', { sheet: config.key, data: form }).then(() => { setForm(emptyForm()); setAdding(false); setShowForm(false); load(); });
+  }
+
+  function remove(id) {
+    if (busyId) return;
+    setBusyId(id);
+    apiCall('delete', { sheet: config.key, id }).then(() => { setBusyId(null); load(); });
+  }
+
+  function renderField(field) {
+    const value = form[field.name];
+    const onChange = e => setForm({ ...form, [field.name]: e.target.value });
+    if (field.type === 'select') {
+      return (
+        <select key={field.name} value={value} onChange={onChange}>
+          <option value="">{field.label}</option>
+          {field.options.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+      );
+    }
+    if (field.type === 'checkbox') {
+      return (
+        <label key={field.name} className="checkbox-field">
+          <input type="checkbox" checked={!!value} onChange={e => setForm({ ...form, [field.name]: e.target.checked })} />
+          {field.label}
+        </label>
+      );
+    }
+    if (field.type === 'multiselect') {
+      const seleccionados = (value || '').split(',').filter(Boolean);
+      function toggle(opt) {
+        const next = seleccionados.includes(opt) ? seleccionados.filter(o => o !== opt) : [...seleccionados, opt];
+        setForm({ ...form, [field.name]: next.join(',') });
+      }
+      return (
+        <div key={field.name} className="full multiselect-field">
+          <span className="entry-meta">{field.label}</span>
+          <div className="multiselect-options">
+            {field.options.map(opt => (
+              <label key={opt} className="checkbox-field">
+                <input type="checkbox" checked={seleccionados.includes(opt)} onChange={() => toggle(opt)} />
+                {opt}
+              </label>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return (
+      <input key={field.name} type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : field.type === 'time' ? 'time' : 'text'}
+        step={field.type === 'number' ? '0.01' : undefined}
+        placeholder={field.label} value={value} onChange={onChange} />
+    );
+  }
+
+  return (
+    <div>
+      <button className={`add-toggle-btn ${showForm ? 'cancel' : ''}`} onClick={() => setShowForm(!showForm)}>
+        {showForm ? 'Cancelar' : '+ Añadir'}
+      </button>
+
+      {showForm && (
+        <form className="entry-form" onSubmit={add}>
+          {config.fields.map(renderField)}
+          <button type="submit" disabled={adding}>{adding ? 'Añadiendo…' : 'Añadir'}</button>
+        </form>
+      )}
+      {loading ? <div className="empty">Cargando…</div> :
+        items.length === 0 ? <div className="empty">Sin registros.</div> :
+        <div className="log">
+          {items.map((it, i) => (
+            <div key={it.id || i} className="entry">
+              <div className="entry-main">
+                <div className="entry-title">{it[config.fields[0].name] || '(sin título)'}</div>
+                <div className="entry-meta">{config.fields.slice(1, 4).map(fld => it[fld.name]).filter(Boolean).join(' · ')}</div>
+                {it.progreso_pct !== undefined && it.progreso_pct !== '' && (
+                  <div className="progress-bar"><div className="progress-fill" style={{ width: `${Math.min(100, parseFloat(it.progreso_pct) || 0)}%` }}></div></div>
+                )}
+              </div>
+              <div className="entry-actions">
+                <button className="ghost" disabled={busyId === it.id} onClick={() => remove(it.id)}>{busyId === it.id ? '…' : 'Borrar'}</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      }
+    </div>
+  );
+}
+
+function App() {
+  const [authed, setAuthed] = useState(!!localStorage.getItem('bitacora_token'));
+  const [category, setCategory] = useState('Dashboard');
+  const [currentModule, setCurrentModule] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  if (API_URL.indexOf('PEGA_AQUI') !== -1) {
+    return (
+      <div className="login-shell">
+        <div className="login-card">
+          <h1>Falta configurar la API</h1>
+          <p>Edita la constante API_URL en el código con la URL /exec de tu Apps Script antes de continuar.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authed) return <Login onLogin={() => setAuthed(true)} />;
+
+  function selectCategory(cat) {
+    setCategory(cat);
+    if (cat === 'Dashboard') {
+      setCurrentModule(null);
+    } else {
+      const mods = modulesForCategory(cat);
+      setCurrentModule(mods.length ? mods[0].key : null);
+    }
+    setSidebarOpen(false);
+  }
+
+  function goTo(cat, moduleKey) {
+    setCategory(cat);
+    setCurrentModule(moduleKey);
+  }
+
+  const categoryModules = modulesForCategory(category);
+  const genericConfig = MODULES_GENERIC.find(m => m.key === currentModule);
+  const activeLabel = currentModule ? (NAV.find(m => m.key === currentModule) || {}).label : category;
+
+  return (
+    <div className="shell">
+      {sidebarOpen && <div className="backdrop" onClick={() => setSidebarOpen(false)} />}
+
+      <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="brand"><span className="dot"></span>Bitácora</div>
+        {TOP_CATEGORIES.map(cat => {
+          const mods = modulesForCategory(cat);
+          const isExpanded = category === cat;
+          return (
+            <div key={cat}>
+              <button className={`nav-item ${isExpanded ? 'active' : ''}`} onClick={() => selectCategory(cat)}>
+                {cat}
+              </button>
+              {isExpanded && mods.length > 0 && (
+                <div className="nav-sub">
+                  {mods.map(m => (
+                    <button key={m.key} className={`nav-sub-item ${currentModule === m.key ? 'active' : ''}`}
+                      onClick={() => { setCurrentModule(m.key); setSidebarOpen(false); }}>
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="main">
+        <div className="topbar-mobile">
+          <button className="menu-btn" onClick={() => setSidebarOpen(true)}>☰</button>
+          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600 }}>Bitácora</span>
+        </div>
+
+        <div className="content">
+          <div className="page-title">{category === 'Dashboard' ? 'Dashboard' : activeLabel}</div>
+          <div className="page-sub">
+            {category === 'Dashboard' ? 'Resumen general' : category}
+          </div>
+
+          {category === 'Dashboard' ? <Dashboard onNavigate={goTo} /> :
+            currentModule === 'Agenda' ? <AgendaTab /> :
+            currentModule === 'Correo' ? <CorreoTab /> :
+            currentModule === 'Tareas' ? <TareasTab /> :
+            currentModule === 'Metas' ? <MetasTab /> :
+            currentModule === 'Cuentas_Bancarias' ? <CuentasHub /> :
+            currentModule === 'Bolsa_Posiciones' ? <BolsaHub /> :
+            currentModule === 'Patrimonio_Snapshot' ? <PatrimonioHub /> :
+            currentModule === 'AnalisisFinanciero' ? <AnalisisFinancieroTab /> :
+            currentModule === 'Transacciones' ? <TransaccionesTab /> :
+            genericConfig ? <GenericTab config={genericConfig} /> : null}
+
+          <div className="footer">Bitácora {FRONTEND_VERSION}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
