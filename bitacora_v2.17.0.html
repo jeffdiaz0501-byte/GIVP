@@ -3250,17 +3250,58 @@ function CoffeeCanPegDial({ peg }) {
   );
 }
 
+// Glosario de términos — para no tener que salir a buscar qué significa
+// cada sigla. Panel colapsable, se abre desde el botón "? Glosario" arriba
+// de la lista.
+const GLOSARIO_COFFEECAN_ = [
+  { termino: 'GARP', definicion: '"Growth At a Reasonable Price" — estrategia de inversión de Peter Lynch: buscar empresas que crecen rápido pero sin pagar un precio disparado por ese crecimiento. Es el criterio general detrás de todo este pipeline.' },
+  { termino: 'Coffee Can Portfolio', definicion: 'Estrategia de comprar acciones de calidad y NO tocarlas por años ("meterlas en un bote de café y olvidarlas") — de ahí el nombre de esta pestaña. Lo opuesto a comprar/vender seguido.' },
+  { termino: 'Multibagger', definicion: 'Una acción cuyo precio se multiplicó varias veces desde que la compraste (o desde que empezaste a seguirla). Un "2-bagger" duplicó su valor, un "10-bagger" lo multiplicó por 10. Término popularizado por Peter Lynch.' },
+  { termino: 'PEG ratio', definicion: 'P/E dividido entre la tasa de crecimiento de las utilidades. Sirve para saber si el precio es razonable DADO el crecimiento, no solo si el P/E es alto o bajo en el vacío. Lynch: ≤1.0 es atractivo, >2.0 el mercado ya le puso precio a las buenas noticias.' },
+  { termino: 'P/E (Price/Earnings)', definicion: 'Precio de la acción dividido entre la utilidad por acción. Cuántas veces la utilidad anual estás pagando por la empresa. Un P/E alto no es malo por sí solo si el crecimiento lo justifica (por eso se usa junto al PEG).' },
+  { termino: 'ROE (Return on Equity)', definicion: 'Utilidad neta dividida entre el patrimonio de los accionistas — qué tan eficiente es la empresa generando ganancias con el capital que tiene. Un ROE alto (aquí exigimos ≥15%) indica un negocio de buena calidad.' },
+  { termino: 'Deuda/Patrimonio', definicion: 'Cuánta deuda tiene la empresa comparada con su patrimonio. Un número bajo (aquí exigimos ≤1.0) indica un balance más conservador, con menos riesgo si vienen tiempos difíciles.' },
+  { termino: 'Margen neto', definicion: 'Qué porcentaje de cada dólar de venta se convierte en utilidad real, después de todos los costos e impuestos.' },
+  { termino: 'Market cap (capitalización de mercado)', definicion: 'Valor total de la empresa en bolsa (precio por acción × número de acciones). Define el "tamaño": micro cap ($50M-$300M), small cap ($300M-$2B), mid cap ($2B-$10B), large cap (>$10B, fuera del rango que buscamos aquí).' },
+  { termino: 'CIK', definicion: 'Central Index Key — el número con el que la SEC identifica a cada empresa que reporta (en vez de usar el ticker bursátil).' },
+  { termino: 'SEC EDGAR', definicion: 'La base de datos pública de la Comisión de Bolsa de EE.UU. (SEC) donde toda empresa que cotiza debe reportar sus resultados financieros. Es la fuente de la Fase A (detección de crecimiento) — gratis y sin sesgo hacia empresas conocidas.' },
+  { termino: 'Crecimiento interanual (YoY)', definicion: '"Year over Year" — comparar un trimestre contra el MISMO trimestre del año anterior (no contra el trimestre inmediatamente anterior), para no confundir estacionalidad con crecimiento real.' },
+  { termino: 'Bolsa / Exchange', definicion: 'Dónde cotiza la acción: NYSE, NASDAQ, AMEX, etc. El pipeline no filtra por bolsa — cubre las tres por igual.' },
+  { termino: 'Precio de referencia', definicion: 'El precio de la acción el día que pasó a "En seguimiento" (aprobó las 3 fases). Es el punto de partida contra el que se mide si se vuelve un multibagger.' },
+  { termino: 'Múltiplo actual', definicion: 'Precio de hoy dividido entre el precio de referencia. Un múltiplo de 2.0x significa que se duplicó desde que empezaste a seguirla.' },
+  { termino: 'Estados del pipeline', definicion: 'Candidata nueva (recién detectada por SEC, esperando Finnhub) → Pendiente de ratios (pasó tamaño/deuda, esperando Alpha Vantage) → En seguimiento (pasó las 3 fases, la revisas tú) → Comprado/Descartado (tu decisión final). Descartada-tamaño o Descartada-calidad significan que no pasó algún filtro automático.' },
+];
+
+function CoffeeCanGlosario() {
+  return (
+    <div className="cc-panel" style={{ marginBottom: 18 }}>
+      <div className="stat-card-label" style={{ marginBottom: 12 }}>Glosario de términos</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
+        {GLOSARIO_COFFEECAN_.map(g => (
+          <div key={g.termino}>
+            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 2 }}>{g.termino}</div>
+            <div className="entry-meta" style={{ lineHeight: 1.5 }}>{g.definicion}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function CoffeeCanTab() {
   const [items, setItems] = useState(null);
+  const [historial, setHistorial] = useState([]);
   const [filtroEstado, setFiltroEstado] = useState('en_seguimiento');
   const [ordenarPor, setOrdenarPor] = useState('crecimiento');
   const [filtroIndustria, setFiltroIndustria] = useState('todas');
   const [vista, setVista] = useState('lista'); // 'lista' | 'detalle'
   const [candidataId, setCandidataId] = useState(null);
   const [busyId, setBusyId] = useState(null);
+  const [mostrarGlosario, setMostrarGlosario] = useState(false);
 
   function load() {
     apiCall('list', { sheet: 'Bolsa_Watchlist' }).then(res => setItems(Array.isArray(res) ? res : []));
+    apiCall('list', { sheet: 'Bolsa_Watchlist_Historial' }).then(res => setHistorial(Array.isArray(res) ? res : []));
   }
   useEffect(load, []);
 
@@ -3315,6 +3356,25 @@ function CoffeeCanTab() {
       { label: '100%+', min: 100, max: Infinity },
     ].map(b => ({ ...b, count: items.filter(i => { const v = parseFloat(i.crecimiento_ingresos_pct); return !isNaN(v) && v >= b.min && v < b.max; }).length }));
 
+    // Concentración por industria — solo entre las que de verdad importan
+    // para el riesgo de tu portafolio (en seguimiento o ya compradas), no
+    // entre las 211 candidatas crudas.
+    const relevantesParaConcentracion = items.filter(i => (i.estado === 'en_seguimiento' || i.estado === 'comprado') && i.industria);
+    const conteoIndustrias = {};
+    relevantesParaConcentracion.forEach(i => { conteoIndustrias[i.industria] = (conteoIndustrias[i.industria] || 0) + 1; });
+    const industriasOrdenadas = Object.keys(conteoIndustrias).sort((a, b) => conteoIndustrias[b] - conteoIndustrias[a]);
+
+    // Alerta de "estancadas": llevan 90+ días en seguimiento con múltiplo
+    // prácticamente plano (ni ganancia ni pérdida real) — candidatas a
+    // reconsiderar si vale la pena seguir monitoreándolas.
+    const hoyMs = Date.now();
+    const estancadas = items.filter(i => {
+      if (i.estado !== 'en_seguimiento' || !i.fecha_precio_referencia || i.multiplo_actual === null || i.multiplo_actual === undefined) return false;
+      const dias = (hoyMs - new Date(i.fecha_precio_referencia).getTime()) / 86400000;
+      const m = parseFloat(i.multiplo_actual);
+      return dias >= 90 && m >= 0.85 && m <= 1.15;
+    });
+
     // Un puñado de candidatas puede traer un % de crecimiento absurdo (miles
     // de %) cuando el año anterior reportó una base casi cero — artefacto de
     // datos, no una señal real. Se excluyen SOLO de este gráfico (siguen
@@ -3356,10 +3416,13 @@ function CoffeeCanTab() {
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <div className="page-title" style={{ margin: 0 }}>Coffee Can</div>
+          <button className="ghost" onClick={() => setMostrarGlosario(!mostrarGlosario)}>{mostrarGlosario ? 'Cerrar glosario' : '? Glosario de términos'}</button>
         </div>
         <div className="entry-meta" style={{ marginBottom: 18 }}>
           Candidatas a multibagger encontradas por el pipeline GARP (SEC EDGAR + Finnhub + Alpha Vantage) — filosofía "coffee can": comprar calidad y no tocarla por años.
         </div>
+
+        {mostrarGlosario && <CoffeeCanGlosario />}
 
         <div className="cc-kpi-row">
           <div className="cc-kpi">
@@ -3445,6 +3508,45 @@ function CoffeeCanTab() {
           </div>
         )}
 
+        {industriasOrdenadas.length > 0 && (
+          <div className="cc-panel" style={{ marginBottom: 16 }}>
+            <div className="stat-card-label" style={{ marginBottom: 12 }}>Concentración por industria (en seguimiento + compradas)</div>
+            <div className="cc-chart-wrap" style={{ height: Math.max(140, industriasOrdenadas.length * 34) }}>
+              <CoffeeCanChart
+                type="bar"
+                data={{
+                  labels: industriasOrdenadas,
+                  datasets: [{ label: 'Candidatas', data: industriasOrdenadas.map(ind => conteoIndustrias[ind]), backgroundColor: '#4C7EF3', borderRadius: 4, maxBarThickness: 22 }],
+                }}
+                options={{
+                  indexAxis: 'y',
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  animation: { duration: 700, easing: 'easeOutCubic' },
+                  plugins: { legend: { display: false } },
+                  scales: {
+                    x: { ticks: { color: '#565C69', font: { family: 'IBM Plex Mono', size: 10 }, stepSize: 1 }, grid: { color: '#262B36' } },
+                    y: { ticks: { color: '#868C9A', font: { family: 'IBM Plex Mono', size: 10.5 } }, grid: { display: false } },
+                  },
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {estancadas.length > 0 && (
+          <div className="cc-panel" style={{ marginBottom: 16, borderColor: 'var(--ink-faint)' }}>
+            <div className="stat-card-label" style={{ marginBottom: 10 }}>⏸ Estancadas (90+ días sin moverse, ±15% desde referencia)</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {estancadas.map(e => (
+                <div key={e.id} className="entry-meta" style={{ cursor: 'pointer' }} onClick={() => abrirDetalle(e.id)}>
+                  {e.ticker} · {formatNumCoffeeCan_(e.multiplo_actual, 2)}x · referencia desde {e.fecha_precio_referencia} →
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
           <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
             {multibaggers > 0 && <option value="multibaggers">🏆 Multibaggers ({multibaggers})</option>}
@@ -3484,7 +3586,8 @@ function CoffeeCanTab() {
                   </div>
                   <div className="entry-meta">
                     {ETIQUETA_ESTADO_COFFEECAN_[it.estado] || it.estado}{it.bolsa ? ' · ' + it.bolsa : ''}{it.industria ? ' · ' + it.industria : ''} · Market cap {formatMoneyCoffeeCan_(it.market_cap)} · Ingresos {formatPctCoffeeCan_(it.crecimiento_ingresos_pct)} · Utilidad {formatPctCoffeeCan_(it.crecimiento_utilidad_pct)}
-                    {it.multiplo_actual && !it.fecha_multibagger && <span className="cc-multiplo" style={{ color: 'var(--ink-soft)' }}> · {formatNumCoffeeCan_(it.multiplo_actual, 2)}x desde referencia</span>}
+                    {it.precio_referencia && <span style={{ color: 'var(--ink-soft)' }}> · ref. ${formatNumCoffeeCan_(it.precio_referencia, 2)}{it.precio_actual ? ' → actual $' + formatNumCoffeeCan_(it.precio_actual, 2) : ''}</span>}
+                    {it.multiplo_actual && !it.fecha_multibagger && <span className="cc-multiplo" style={{ color: 'var(--ink-soft)' }}> ({formatNumCoffeeCan_(it.multiplo_actual, 2)}x)</span>}
                   </div>
                 </div>
                 <div>→</div>
@@ -3530,13 +3633,62 @@ function CoffeeCanTab() {
         <div className="stat-card"><div className="stat-card-label">ROE</div><div className="stat-card-value">{formatPctCoffeeCan_(it.roe_pct)}</div></div>
         <div className="stat-card"><div className="stat-card-label">Deuda/Patrimonio</div><div className="stat-card-value">{formatNumCoffeeCan_(it.deuda_patrimonio, 2)}</div></div>
         {it.precio_referencia && (
-          <div className="stat-card">
-            <div className="stat-card-label">Múltiplo desde referencia</div>
-            <div className="stat-card-value" style={{ color: it.fecha_multibagger ? '#E5A93F' : 'var(--ink)' }}>{formatNumCoffeeCan_(it.multiplo_actual, 2)}x</div>
-            <div className="stat-card-sub">ref. ${formatNumCoffeeCan_(it.precio_referencia, 2)} ({it.fecha_precio_referencia}) · meta {UMBRAL_MULTIBAGGER_COFFEECAN_}x</div>
-          </div>
+          <React.Fragment>
+            <div className="stat-card">
+              <div className="stat-card-label">Precio de referencia</div>
+              <div className="stat-card-value">${formatNumCoffeeCan_(it.precio_referencia, 2)}</div>
+              <div className="stat-card-sub">desde {it.fecha_precio_referencia}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-card-label">Precio actual</div>
+              <div className="stat-card-value">{it.precio_actual ? '$' + formatNumCoffeeCan_(it.precio_actual, 2) : '—'}</div>
+              <div className="stat-card-sub">{it.fecha_actualizacion ? 'al ' + it.fecha_actualizacion : 'esperando primera revisión diaria'}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-card-label">Múltiplo desde referencia</div>
+              <div className="stat-card-value" style={{ color: it.fecha_multibagger ? '#E5A93F' : 'var(--ink)' }}>{formatNumCoffeeCan_(it.multiplo_actual, 2)}x</div>
+              <div className="stat-card-sub">meta multibagger: {UMBRAL_MULTIBAGGER_COFFEECAN_}x</div>
+            </div>
+          </React.Fragment>
         )}
       </div>
+
+      {(() => {
+        const historialCandidata = historial.filter(h => h.watchlist_id === it.id).sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''));
+        if (historialCandidata.length < 2) return null;
+        return (
+          <div className="cc-panel" style={{ marginBottom: 16 }}>
+            <div className="stat-card-label" style={{ marginBottom: 12 }}>Evolución del precio desde que entró en seguimiento</div>
+            <div className="cc-chart-wrap">
+              <CoffeeCanChart
+                type="line"
+                data={{
+                  labels: historialCandidata.map(h => h.fecha),
+                  datasets: [{
+                    label: it.ticker,
+                    data: historialCandidata.map(h => h.precio),
+                    borderColor: '#4C7EF3',
+                    backgroundColor: 'rgba(76,126,243,0.12)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 3,
+                  }],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  animation: { duration: 700, easing: 'easeOutCubic' },
+                  plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => '$' + ctx.parsed.y.toFixed(2) } } },
+                  scales: {
+                    x: { ticks: { color: '#565C69', font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: '#262B36' } },
+                    y: { ticks: { color: '#565C69', font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: '#262B36' } },
+                  },
+                }}
+              />
+            </div>
+          </div>
+        );
+      })()}
 
       {it.analisis_texto && (
         <div className="cc-panel" style={{ marginBottom: 16 }}>
