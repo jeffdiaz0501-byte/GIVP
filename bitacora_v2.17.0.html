@@ -3139,6 +3139,11 @@ const ETIQUETA_ESTADO_COFFEECAN_ = {
 };
 const ORDEN_ESTADOS_COFFEECAN_ = ['en_seguimiento', 'comprado', 'descartado', 'pendiente_ratios', 'candidato_nuevo', 'descartado_tamano', 'descartado_calidad'];
 const UMBRAL_MULTIBAGGER_COFFEECAN_ = 2; // solo para mostrar — el umbral real que decide vive en AnalisisBolsa.gs (UMBRAL_MULTIBAGGER_)
+const RECOMENDACION_COLOR_COFFEECAN_ = {
+  'Sólida': '#3FCB8C',
+  'Atractiva con matices': '#E5A93F',
+  'Vigilar de cerca': '#868C9A',
+};
 const ESTADO_COLOR_COFFEECAN_ = {
   candidato_nuevo: '#868C9A',
   descartado_tamano: '#565C69',
@@ -3497,6 +3502,32 @@ function CoffeeCanTab() {
           </div>
         )}
       </div>
+
+      {it.analisis_texto && (
+        <div className="cc-panel" style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div className="dash-label" style={{ margin: 0 }}>Análisis {it.fecha_analisis ? '· ' + it.fecha_analisis : ''}</div>
+            {it.analisis_recomendacion && (
+              <span className="cc-multibagger-badge" style={{
+                background: RECOMENDACION_COLOR_COFFEECAN_[it.analisis_recomendacion] ? RECOMENDACION_COLOR_COFFEECAN_[it.analisis_recomendacion] + '26' : 'rgba(134,140,154,0.15)',
+                color: RECOMENDACION_COLOR_COFFEECAN_[it.analisis_recomendacion] || 'var(--ink-soft)',
+              }}>{it.analisis_recomendacion}</span>
+            )}
+          </div>
+          {it.analisis_texto.split('\n\n').map((parrafo, i) => {
+            const partes = parrafo.split('\n');
+            const titulo = partes.length > 1 ? partes[0] : null;
+            const cuerpo = partes.length > 1 ? partes.slice(1).join(' ') : parrafo;
+            return (
+              <div key={i} style={{ marginBottom: i < it.analisis_texto.split('\n\n').length - 1 ? 14 : 0 }}>
+                {titulo && <div className="stat-card-label" style={{ marginBottom: 4 }}>{titulo}</div>}
+                <p style={{ lineHeight: 1.6, fontSize: 13.5, margin: 0 }}>{cuerpo}</p>
+              </div>
+            );
+          })}
+          <div className="entry-meta" style={{ marginTop: 14 }}>Reporte generado por reglas fijas sobre los datos del pipeline — no es un análisis de IA todavía, ni asesoría financiera personalizada.</div>
+        </div>
+      )}
 
       <div className="dash-card full">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
