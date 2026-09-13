@@ -227,6 +227,16 @@
 
   /* ── Coffee Can (análisis de bolsa) ─────────────────────────── */
   @keyframes ccFadeSlideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .cc-layout { display: flex; gap: 22px; align-items: flex-start; }
+  .cc-sidebar { display: flex; flex-direction: column; gap: 4px; width: 176px; flex-shrink: 0; position: sticky; top: 16px; }
+  .cc-sidebar-btn { display: flex; align-items: center; gap: 9px; text-align: left; padding: 10px 12px; border-radius: 8px; background: transparent; border: 1px solid transparent; color: var(--ink-soft); cursor: pointer; font-size: 13px; font-family: inherit; transition: background 120ms ease, border-color 120ms ease, color 120ms ease; }
+  .cc-sidebar-btn:hover { background: var(--surface); color: var(--ink); }
+  .cc-sidebar-btn.active { background: var(--surface); border-color: var(--line); color: var(--accent); font-weight: 600; }
+  .cc-content { flex: 1; min-width: 0; }
+  @media (max-width: 760px) {
+    .cc-layout { flex-direction: column; }
+    .cc-sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; position: static; }
+  }
   .cc-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
   .cc-kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 14px; }
   .cc-kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
@@ -3133,11 +3143,12 @@ const ETIQUETA_ESTADO_COFFEECAN_ = {
   descartado_tamano: 'Descartada — tamaño',
   pendiente_ratios: 'Pendiente de ratios',
   descartado_calidad: 'Descartada — calidad',
+  descartado_sin_datos: 'Descartada — sin datos',
   en_seguimiento: 'En seguimiento',
   comprado: 'Comprado',
   descartado: 'Descartado',
 };
-const ORDEN_ESTADOS_COFFEECAN_ = ['en_seguimiento', 'comprado', 'descartado', 'pendiente_ratios', 'candidato_nuevo', 'descartado_tamano', 'descartado_calidad'];
+const ORDEN_ESTADOS_COFFEECAN_ = ['en_seguimiento', 'comprado', 'descartado', 'pendiente_ratios', 'candidato_nuevo', 'descartado_tamano', 'descartado_calidad', 'descartado_sin_datos'];
 const UMBRAL_MULTIBAGGER_COFFEECAN_ = 2; // solo para mostrar — el umbral real que decide vive en AnalisisBolsa.gs (UMBRAL_MULTIBAGGER_)
 const RECOMENDACION_COLOR_COFFEECAN_ = {
   'Sólida': '#3FCB8C',
@@ -3149,6 +3160,7 @@ const ESTADO_COLOR_COFFEECAN_ = {
   descartado_tamano: '#565C69',
   pendiente_ratios: '#E5A93F',
   descartado_calidad: '#565C69',
+  descartado_sin_datos: '#3A3F4A',
   en_seguimiento: '#4C7EF3',
   comprado: '#3FCB8C',
   descartado: '#E5555A',
@@ -3298,7 +3310,16 @@ function CoffeeCanTab() {
   const [vista, setVista] = useState('lista'); // 'lista' | 'detalle'
   const [candidataId, setCandidataId] = useState(null);
   const [busyId, setBusyId] = useState(null);
-  const [mostrarGlosario, setMostrarGlosario] = useState(false);
+  const [seccion, setSeccion] = useState('candidatas');
+  const [familiasOcultasScatter, setFamiliasOcultasScatter] = useState(() => new Set());
+
+  function toggleFamiliaScatter(estado) {
+    setFamiliasOcultasScatter(prev => {
+      const next = new Set(prev);
+      if (next.has(estado)) next.delete(estado); else next.add(estado);
+      return next;
+    });
+  }
 
   function load() {
     apiCall('list', { sheet: 'Bolsa_Watchlist' }).then(res => setItems(Array.isArray(res) ? res : []));
@@ -3342,6 +3363,9 @@ function CoffeeCanTab() {
     const enSeguimiento = items.filter(i => i.estado === 'en_seguimiento').length;
     const comprado = items.filter(i => i.estado === 'comprado').length;
     const multibaggers = items.filter(i => !!i.fecha_multibagger).length;
+    const solidas = items.filter(i => i.analisis_recomendacion === 'Sólida').length;
+    const atractivas = items.filter(i => i.analisis_recomendacion === 'Atractiva con matices').length;
+    const vigilar = items.filter(i => i.analisis_recomendacion === 'Vigilar de cerca').length;
     const pasoFaseB = items.filter(i => ['pendiente_ratios', 'descartado_calidad', 'en_seguimiento', 'comprado', 'descartado'].includes(i.estado)).length;
     const pasoFaseC = items.filter(i => ['en_seguimiento', 'comprado', 'descartado'].includes(i.estado)).length;
     const decididas = items.filter(i => ['comprado', 'descartado'].includes(i.estado)).length;
@@ -3416,18 +3440,36 @@ function CoffeeCanTab() {
       },
     };
 
+    const SECCIONES_COFFEECAN_ = [
+      { key: 'candidatas', label: 'Candidatas', icono: '📋' },
+      { key: 'resumen', label: 'Resumen y análisis', icono: '📊' },
+      { key: 'glosario', label: 'Glosario', icono: '❔' },
+    ];
+
     return (
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <div className="page-title" style={{ margin: 0 }}>Coffee Can</div>
-          <button className="ghost" onClick={() => setMostrarGlosario(!mostrarGlosario)}>{mostrarGlosario ? 'Cerrar glosario' : '? Glosario de términos'}</button>
-        </div>
+        <div className="page-title" style={{ marginBottom: 4 }}>Coffee Can</div>
         <div className="entry-meta" style={{ marginBottom: 18 }}>
           Candidatas a multibagger encontradas por el pipeline GARP (SEC EDGAR + Finnhub + Alpha Vantage) — filosofía "coffee can": comprar calidad y no tocarla por años.
         </div>
 
-        {mostrarGlosario && <CoffeeCanGlosario />}
+        <div className="cc-layout">
+          <div className="cc-sidebar">
+            {SECCIONES_COFFEECAN_.map(s => (
+              <button
+                key={s.key}
+                className={`cc-sidebar-btn ${seccion === s.key ? 'active' : ''}`}
+                onClick={() => setSeccion(s.key)}
+              >
+                <span>{s.icono}</span> {s.label}
+              </button>
+            ))}
+          </div>
 
+          <div className="cc-content">
+        {seccion === 'glosario' && <CoffeeCanGlosario />}
+
+        {seccion === 'resumen' && (<>
         <div className="cc-kpi-row">
           <div className="cc-kpi">
             <div className="cc-kpi-label">Candidatas totales</div>
@@ -3448,6 +3490,18 @@ function CoffeeCanTab() {
           <div className="cc-kpi">
             <div className="cc-kpi-label">Crecimiento mediano ingresos</div>
             <div className="cc-kpi-value"><CoffeeCanCountUp value={crecimientoMediano} decimals={1} suffix="%" /></div>
+          </div>
+          <div className="cc-kpi" style={{ borderColor: RECOMENDACION_COLOR_COFFEECAN_['Sólida'] + '55' }}>
+            <div className="cc-kpi-label">Recomendación: Sólida</div>
+            <div className="cc-kpi-value" style={{ color: RECOMENDACION_COLOR_COFFEECAN_['Sólida'] }}><CoffeeCanCountUp value={solidas} /></div>
+          </div>
+          <div className="cc-kpi" style={{ borderColor: RECOMENDACION_COLOR_COFFEECAN_['Atractiva con matices'] + '55' }}>
+            <div className="cc-kpi-label">Recomendación: Atractiva</div>
+            <div className="cc-kpi-value" style={{ color: RECOMENDACION_COLOR_COFFEECAN_['Atractiva con matices'] }}><CoffeeCanCountUp value={atractivas} /></div>
+          </div>
+          <div className="cc-kpi">
+            <div className="cc-kpi-label">Recomendación: Vigilar</div>
+            <div className="cc-kpi-value" style={{ color: RECOMENDACION_COLOR_COFFEECAN_['Vigilar de cerca'] }}><CoffeeCanCountUp value={vigilar} /></div>
           </div>
         </div>
 
@@ -3486,11 +3540,32 @@ function CoffeeCanTab() {
               Market cap vs. crecimiento de ingresos
               {ocultasPorOutlier > 0 && <span style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--ink-faint)', fontWeight: 400 }}> — {ocultasPorOutlier} candidata(s) con crecimiento &gt;{TOPE_VISUAL_SCATTER}% ocultas aquí (dato atípico, siguen en la lista)</span>}
             </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+              {Object.keys(gruposScatter).map(estado => {
+                const oculta = familiasOcultasScatter.has(estado);
+                const color = ESTADO_COLOR_COFFEECAN_[estado] || '#868C9A';
+                return (
+                  <button
+                    key={estado}
+                    className="ghost"
+                    onClick={() => toggleFamiliaScatter(estado)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, padding: '5px 12px',
+                      opacity: oculta ? 0.4 : 1,
+                      borderColor: oculta ? 'var(--line)' : color,
+                    }}
+                  >
+                    <span style={{ width: 9, height: 9, borderRadius: '50%', background: color, display: 'inline-block' }}></span>
+                    {ETIQUETA_ESTADO_COFFEECAN_[estado] || estado} ({gruposScatter[estado].length})
+                  </button>
+                );
+              })}
+            </div>
             <div className="cc-chart-wrap">
               <CoffeeCanChart
                 type="scatter"
                 data={{
-                  datasets: Object.keys(gruposScatter).map(estado => ({
+                  datasets: Object.keys(gruposScatter).filter(estado => !familiasOcultasScatter.has(estado)).map(estado => ({
                     label: ETIQUETA_ESTADO_COFFEECAN_[estado] || estado,
                     data: gruposScatter[estado],
                     backgroundColor: ESTADO_COLOR_COFFEECAN_[estado] || '#868C9A',
@@ -3550,7 +3625,9 @@ function CoffeeCanTab() {
             </div>
           </div>
         )}
+        </>)}
 
+        {seccion === 'candidatas' && (<>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
           <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
             {multibaggers > 0 && <option value="multibaggers">🏆 Multibaggers ({multibaggers})</option>}
@@ -3607,6 +3684,9 @@ function CoffeeCanTab() {
             ))}
           </div>
         )}
+        </>)}
+          </div>
+        </div>
       </div>
     );
   }
