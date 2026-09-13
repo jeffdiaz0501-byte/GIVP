@@ -3294,6 +3294,7 @@ function CoffeeCanTab() {
   const [filtroEstado, setFiltroEstado] = useState('en_seguimiento');
   const [ordenarPor, setOrdenarPor] = useState('crecimiento');
   const [filtroIndustria, setFiltroIndustria] = useState('todas');
+  const [filtroRecomendacion, setFiltroRecomendacion] = useState('todas');
   const [vista, setVista] = useState('lista'); // 'lista' | 'detalle'
   const [candidataId, setCandidataId] = useState(null);
   const [busyId, setBusyId] = useState(null);
@@ -3324,7 +3325,10 @@ function CoffeeCanTab() {
   if (vista === 'lista') {
     const visiblesPorEstado = filtroEstado === 'todas' ? items : filtroEstado === 'multibaggers' ? items.filter(it => it.fecha_multibagger) : items.filter(it => it.estado === filtroEstado);
     const industriasDisponibles = [...new Set(items.map(it => it.industria).filter(Boolean))].sort();
-    const visibles = filtroIndustria === 'todas' ? visiblesPorEstado : visiblesPorEstado.filter(it => it.industria === filtroIndustria);
+    const RECOMENDACIONES_ORDEN_ = ['Sólida', 'Atractiva con matices', 'Vigilar de cerca'];
+    const recomendacionesDisponibles = RECOMENDACIONES_ORDEN_.filter(r => items.some(it => it.analisis_recomendacion === r));
+    const visiblesPorIndustria = filtroIndustria === 'todas' ? visiblesPorEstado : visiblesPorEstado.filter(it => it.industria === filtroIndustria);
+    const visibles = filtroRecomendacion === 'todas' ? visiblesPorIndustria : visiblesPorIndustria.filter(it => it.analisis_recomendacion === filtroRecomendacion);
     const CRITERIOS_ORDEN = {
       crecimiento: (a, b) => (parseFloat(b.crecimiento_ingresos_pct) || 0) - (parseFloat(a.crecimiento_ingresos_pct) || 0),
       multiplo: (a, b) => (parseFloat(b.multiplo_actual) || 0) - (parseFloat(a.multiplo_actual) || 0),
@@ -3559,6 +3563,14 @@ function CoffeeCanTab() {
             <select value={filtroIndustria} onChange={e => setFiltroIndustria(e.target.value)}>
               <option value="todas">Todas las industrias</option>
               {industriasDisponibles.map(ind => <option key={ind} value={ind}>{ind}</option>)}
+            </select>
+          )}
+          {recomendacionesDisponibles.length > 1 && (
+            <select value={filtroRecomendacion} onChange={e => setFiltroRecomendacion(e.target.value)}>
+              <option value="todas">Todas las recomendaciones</option>
+              {recomendacionesDisponibles.map(rec => (
+                <option key={rec} value={rec}>{rec} ({items.filter(i => i.analisis_recomendacion === rec).length})</option>
+              ))}
             </select>
           )}
           <select value={ordenarPor} onChange={e => setOrdenarPor(e.target.value)}>
