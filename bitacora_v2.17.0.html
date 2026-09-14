@@ -227,16 +227,9 @@
 
   /* ── Coffee Can (análisis de bolsa) ─────────────────────────── */
   @keyframes ccFadeSlideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-  .cc-layout { display: flex; gap: 22px; align-items: flex-start; }
-  .cc-sidebar { display: flex; flex-direction: column; gap: 4px; width: 176px; flex-shrink: 0; position: sticky; top: 16px; }
-  .cc-sidebar-btn { display: flex; align-items: center; gap: 9px; text-align: left; padding: 10px 12px; border-radius: 8px; background: transparent; border: 1px solid transparent; color: var(--ink-soft); cursor: pointer; font-size: 13px; font-family: inherit; transition: background 120ms ease, border-color 120ms ease, color 120ms ease; }
-  .cc-sidebar-btn:hover { background: var(--surface); color: var(--ink); }
-  .cc-sidebar-btn.active { background: var(--surface); border-color: var(--line); color: var(--accent); font-weight: 600; }
-  .cc-content { flex: 1; min-width: 0; }
-  @media (max-width: 760px) {
-    .cc-layout { flex-direction: column; }
-    .cc-sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; position: static; }
-  }
+  .cc-feed-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+  .cc-feed-row:last-child { border-bottom: none; }
+  .cc-stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px; }
   .cc-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
   .cc-kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 14px; }
   .cc-kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
@@ -3310,7 +3303,7 @@ function CoffeeCanTab() {
   const [vista, setVista] = useState('lista'); // 'lista' | 'detalle'
   const [candidataId, setCandidataId] = useState(null);
   const [busyId, setBusyId] = useState(null);
-  const [seccion, setSeccion] = useState('candidatas');
+  const [seccion, setSeccion] = useState('dashboard');
   const [familiasOcultasScatter, setFamiliasOcultasScatter] = useState(() => new Set());
 
   function toggleFamiliaScatter(estado) {
@@ -3441,10 +3434,55 @@ function CoffeeCanTab() {
     };
 
     const SECCIONES_COFFEECAN_ = [
-      { key: 'candidatas', label: 'Candidatas', icono: '📋' },
-      { key: 'resumen', label: 'Resumen y análisis', icono: '📊' },
-      { key: 'glosario', label: 'Glosario', icono: '❔' },
+      { key: 'dashboard', label: 'Dashboard' },
+      { key: 'sec', label: 'Filtro SEC EDGAR' },
+      { key: 'finnhub', label: 'Filtro Finnhub' },
+      { key: 'alphavantage', label: 'Filtro Alpha Vantage' },
+      { key: 'seguimiento', label: 'Seguimiento' },
+      { key: 'glosario', label: 'Glosario' },
     ];
+
+    // ── Datos para la pestaña "Filtro Finnhub" (Fase B) ──────────────────────
+    const enColaFinnhub = items.filter(i => i.estado === 'candidato_nuevo').length;
+    const descartadasTamanoFinnhub = items.filter(i => i.estado === 'descartado_tamano').length;
+    // descartado_calidad lo puede causar Finnhub (deuda alta) O Alpha Vantage
+    // (PEG/ROE) — se distinguen porque solo Alpha Vantage llega a rellenar
+    // peg_ratio; si no tiene peg_ratio, la descartó Finnhub por deuda.
+    const descartadasDeudaFinnhub = items.filter(i => i.estado === 'descartado_calidad' && i.peg_ratio === null).length;
+    const sinDatosFinnhub = items.filter(i => i.estado === 'descartado_sin_datos').length;
+    const movimientosFinnhub = items
+      .filter(i => i.market_cap !== null && i.market_cap !== undefined)
+      .slice()
+      .sort((a, b) => (b.fecha_actualizacion || '').localeCompare(a.fecha_actualizacion || ''))
+      .slice(0, 15);
+
+    // ── Datos para la pestaña "Filtro Alpha Vantage" (Fase C) ────────────────
+    const enColaAlphaVantage = items.filter(i => i.estado === 'pendiente_ratios').length;
+    const descartadasCalidadAV = items.filter(i => i.estado === 'descartado_calidad' && i.peg_ratio !== null).length;
+    const movimientosAlphaVantage = items
+      .filter(i => i.peg_ratio !== null && i.peg_ratio !== undefined || ['en_seguimiento', 'comprado'].includes(i.estado))
+      .slice()
+      .sort((a, b) => (b.fecha_analisis || b.fecha_actualizacion || '').localeCompare(a.fecha_analisis || a.fecha_actualizacion || ''))
+      .slice(0, 15);
+
+    // ── Gráfico "Comportamiento en bolsa" (Dashboard) — evolución del
+    // múltiplo de cada candidata en_seguimiento/comprado a partir del
+    // historial diario que guarda revisarMultibaggers_.
+    const PALETA_LINEAS_COFFEECAN_ = ['#4C7EF3', '#3FCB8C', '#E5A93F', '#E5555A', '#B18CF3', '#3FCBC3', '#F3944C', '#868C9A'];
+    const tickersEnSeguimientoSet = new Set(items.filter(i => ['en_seguimiento', 'comprado'].includes(i.estado)).map(i => i.ticker));
+    const historialRelevante = historial.filter(h => tickersEnSeguimientoSet.has(h.ticker));
+    const fechasComportamiento = [...new Set(historialRelevante.map(h => h.fecha))].sort();
+    const historialPorTicker = {};
+    historialRelevante.forEach(h => { (historialPorTicker[h.ticker] = historialPorTicker[h.ticker] || {})[h.fecha] = parseFloat(h.multiplo); });
+    const datasetsComportamiento = Object.keys(historialPorTicker).map((ticker, idx) => ({
+      label: ticker,
+      data: fechasComportamiento.map(f => historialPorTicker[ticker][f] !== undefined ? historialPorTicker[ticker][f] : null),
+      borderColor: PALETA_LINEAS_COFFEECAN_[idx % PALETA_LINEAS_COFFEECAN_.length],
+      backgroundColor: 'transparent',
+      tension: 0.3,
+      pointRadius: 2,
+      spanGaps: true,
+    }));
 
     return (
       <div>
@@ -3453,23 +3491,15 @@ function CoffeeCanTab() {
           Candidatas a multibagger encontradas por el pipeline GARP (SEC EDGAR + Finnhub + Alpha Vantage) — filosofía "coffee can": comprar calidad y no tocarla por años.
         </div>
 
-        <div className="cc-layout">
-          <div className="cc-sidebar">
-            {SECCIONES_COFFEECAN_.map(s => (
-              <button
-                key={s.key}
-                className={`cc-sidebar-btn ${seccion === s.key ? 'active' : ''}`}
-                onClick={() => setSeccion(s.key)}
-              >
-                <span>{s.icono}</span> {s.label}
-              </button>
-            ))}
-          </div>
+        <div className="detail-tabs">
+          {SECCIONES_COFFEECAN_.map(s => (
+            <button key={s.key} className={`detail-tab ${seccion === s.key ? 'active' : ''}`} onClick={() => setSeccion(s.key)}>{s.label}</button>
+          ))}
+        </div>
 
-          <div className="cc-content">
         {seccion === 'glosario' && <CoffeeCanGlosario />}
 
-        {seccion === 'resumen' && (<>
+        {seccion === 'dashboard' && (<>
         <div className="cc-kpi-row">
           <div className="cc-kpi">
             <div className="cc-kpi-label">Candidatas totales</div>
@@ -3505,6 +3535,44 @@ function CoffeeCanTab() {
           </div>
         </div>
 
+        {datasetsComportamiento.length > 0 ? (
+          <div className="cc-panel" style={{ marginBottom: 16 }}>
+            <div className="stat-card-label" style={{ marginBottom: 12 }}>Comportamiento en bolsa — candidatas en seguimiento (múltiplo vs. precio de referencia)</div>
+            <div className="cc-chart-wrap" style={{ height: 280 }}>
+              <CoffeeCanChart
+                type="line"
+                data={{ labels: fechasComportamiento, datasets: datasetsComportamiento }}
+                options={Object.assign({}, opcionesEjesOscuro, {
+                  scales: {
+                    x: opcionesEjesOscuro.scales.x,
+                    y: Object.assign({}, opcionesEjesOscuro.scales.y, { title: { display: true, text: 'Múltiplo (x)', color: '#565C69', font: { family: 'IBM Plex Mono', size: 10 } } }),
+                  },
+                })}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="cc-panel" style={{ marginBottom: 16 }}>
+            <div className="empty">Aún no hay suficiente historial diario de precios para graficar el comportamiento (se acumula un punto por día vía revisarMultibaggers_).</div>
+          </div>
+        )}
+        </>)}
+
+        {seccion === 'sec' && (<>
+        <div className="entry-meta" style={{ marginBottom: 16 }}>
+          Fase A — SEC EDGAR (corre mensualmente desde tu PC): identifica empresas con crecimiento interanual de ingresos Y utilidad neta ≥15%, descartando datos atípicos (&gt;1000%, artefacto de una base casi cero el año anterior).
+        </div>
+        <div className="cc-stats-row">
+          <div className="cc-kpi">
+            <div className="cc-kpi-label">Empresas detectadas</div>
+            <div className="cc-kpi-value"><CoffeeCanCountUp value={totalCandidatas} /></div>
+          </div>
+          <div className="cc-kpi">
+            <div className="cc-kpi-label">Crecimiento mediano ingresos</div>
+            <div className="cc-kpi-value"><CoffeeCanCountUp value={crecimientoMediano} decimals={1} suffix="%" /></div>
+          </div>
+        </div>
+
         {totalCandidatas > 0 && (
           <div className="cc-charts-grid">
             <div className="cc-panel">
@@ -3533,6 +3601,34 @@ function CoffeeCanTab() {
             </div>
           </div>
         )}
+        </>)}
+
+        {seccion === 'finnhub' && (<>
+        <div className="entry-meta" style={{ marginBottom: 16 }}>
+          Fase B — Finnhub (cada 15 min): filtra por market cap ($50M–$10B) y deuda/patrimonio (máx. 1.0). Corre en tandas de 28 candidatas por ejecución.
+        </div>
+        <div className="cc-stats-row">
+          <div className="cc-kpi">
+            <div className="cc-kpi-label">En cola</div>
+            <div className="cc-kpi-value"><CoffeeCanCountUp value={enColaFinnhub} /></div>
+          </div>
+          <div className="cc-kpi">
+            <div className="cc-kpi-label">Pasaron tamaño + deuda</div>
+            <div className="cc-kpi-value" style={{ color: 'var(--accent)' }}><CoffeeCanCountUp value={pasoFaseB} /></div>
+          </div>
+          <div className="cc-kpi">
+            <div className="cc-kpi-label">Descartadas — tamaño</div>
+            <div className="cc-kpi-value"><CoffeeCanCountUp value={descartadasTamanoFinnhub} /></div>
+          </div>
+          <div className="cc-kpi">
+            <div className="cc-kpi-label">Descartadas — deuda</div>
+            <div className="cc-kpi-value"><CoffeeCanCountUp value={descartadasDeudaFinnhub} /></div>
+          </div>
+          <div className="cc-kpi">
+            <div className="cc-kpi-label">Sin datos (preferentes/warrants)</div>
+            <div className="cc-kpi-value"><CoffeeCanCountUp value={sinDatosFinnhub} /></div>
+          </div>
+        </div>
 
         {Object.keys(gruposScatter).length > 0 && (
           <div className="cc-panel" style={{ marginBottom: 16 }}>
@@ -3613,8 +3709,48 @@ function CoffeeCanTab() {
           </div>
         )}
 
+        <div className="cc-panel">
+          <div className="stat-card-label" style={{ marginBottom: 10 }}>Últimos movimientos de Finnhub</div>
+          {movimientosFinnhub.length === 0 ? <div className="empty">Todavía no hay candidatas procesadas por Finnhub.</div> : movimientosFinnhub.map(m => (
+            <div key={m.id} className="cc-feed-row" style={{ cursor: 'pointer' }} onClick={() => abrirDetalle(m.id)}>
+              <span><strong>{m.ticker}</strong> {m.bolsa ? '· ' + m.bolsa : ''} {m.industria ? '· ' + m.industria : ''}</span>
+              <span style={{ color: ESTADO_COLOR_COFFEECAN_[m.estado] || 'var(--ink-soft)' }}>{ETIQUETA_ESTADO_COFFEECAN_[m.estado] || m.estado} · {formatMoneyCoffeeCan_(m.market_cap)} · {m.fecha_actualizacion || '—'}</span>
+            </div>
+          ))}
+        </div>
+        </>)}
+
+        {seccion === 'alphavantage' && (<>
+        <div className="entry-meta" style={{ marginBottom: 16 }}>
+          Fase C — Alpha Vantage (diaria, máx. 20/día): filtra por PEG ratio (máx. 1.5) y ROE (mín. 15%). Al aprobar, captura el precio de referencia y genera el análisis basado en reglas.
+        </div>
+        <div className="cc-stats-row">
+          <div className="cc-kpi">
+            <div className="cc-kpi-label">En cola</div>
+            <div className="cc-kpi-value"><CoffeeCanCountUp value={enColaAlphaVantage} /></div>
+          </div>
+          <div className="cc-kpi">
+            <div className="cc-kpi-label">Aprobadas (en seguimiento + compradas)</div>
+            <div className="cc-kpi-value" style={{ color: 'var(--accent)' }}><CoffeeCanCountUp value={pasoFaseC} /></div>
+          </div>
+          <div className="cc-kpi">
+            <div className="cc-kpi-label">Descartadas — PEG/ROE</div>
+            <div className="cc-kpi-value"><CoffeeCanCountUp value={descartadasCalidadAV} /></div>
+          </div>
+        </div>
+
+        <div className="cc-panel" style={{ marginBottom: 16 }}>
+          <div className="stat-card-label" style={{ marginBottom: 10 }}>Últimos movimientos de Alpha Vantage</div>
+          {movimientosAlphaVantage.length === 0 ? <div className="empty">Todavía no hay candidatas procesadas por Alpha Vantage.</div> : movimientosAlphaVantage.map(m => (
+            <div key={m.id} className="cc-feed-row" style={{ cursor: 'pointer' }} onClick={() => abrirDetalle(m.id)}>
+              <span><strong>{m.ticker}</strong> · PEG {formatNumCoffeeCan_(m.peg_ratio, 2)} · ROE {formatPctCoffeeCan_(m.roe_pct)}</span>
+              <span style={{ color: ESTADO_COLOR_COFFEECAN_[m.estado] || 'var(--ink-soft)' }}>{ETIQUETA_ESTADO_COFFEECAN_[m.estado] || m.estado}{m.analisis_recomendacion ? ' · ' + m.analisis_recomendacion : ''} · {m.fecha_analisis || m.fecha_actualizacion || '—'}</span>
+            </div>
+          ))}
+        </div>
+
         {estancadas.length > 0 && (
-          <div className="cc-panel" style={{ marginBottom: 16, borderColor: 'var(--ink-faint)' }}>
+          <div className="cc-panel" style={{ borderColor: 'var(--ink-faint)' }}>
             <div className="stat-card-label" style={{ marginBottom: 10 }}>⏸ Estancadas (90+ días sin moverse, ±15% desde referencia)</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {estancadas.map(e => (
@@ -3627,7 +3763,7 @@ function CoffeeCanTab() {
         )}
         </>)}
 
-        {seccion === 'candidatas' && (<>
+        {seccion === 'seguimiento' && (<>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
           <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
             {multibaggers > 0 && <option value="multibaggers">🏆 Multibaggers ({multibaggers})</option>}
@@ -3685,8 +3821,6 @@ function CoffeeCanTab() {
           </div>
         )}
         </>)}
-          </div>
-        </div>
       </div>
     );
   }
