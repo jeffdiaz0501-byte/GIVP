@@ -227,9 +227,24 @@
 
   /* ── Coffee Can (análisis de bolsa) ─────────────────────────── */
   @keyframes ccFadeSlideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-  .cc-feed-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+  .cc-feed-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; font-family: 'IBM Plex Mono', monospace; }
   .cc-feed-row:last-child { border-bottom: none; }
   .cc-stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px; }
+
+  /* ── Estética "terminal de trading": esquinas más rectas, densidad más
+     alta, el color vive en el número no en el contenedor ────────────── */
+  .cc-panel, .cc-kpi { border-radius: 3px; }
+  .cc-entry { border-radius: 3px; padding: 9px 13px; }
+  .cc-entry .entry-title { font-size: 13px; }
+  .cc-entry .entry-meta { font-size: 10.5px; }
+  .cc-up { color: var(--green); font-weight: 600; }
+  .cc-down { color: #E5555A; font-weight: 600; }
+  .cc-tickerbar { overflow: hidden; border: 1px solid var(--line); border-radius: 3px; background: var(--surface); margin-bottom: 16px; white-space: nowrap; }
+  .cc-tickerbar-track { display: inline-flex; gap: 30px; padding: 7px 16px; animation: ccTickerScroll linear infinite; animation-duration: var(--cc-ticker-duration, 30s); }
+  .cc-tickerbar:hover .cc-tickerbar-track { animation-play-state: paused; }
+  .cc-tickerbar-item { display: inline-flex; align-items: center; gap: 6px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--ink-soft); }
+  .cc-tickerbar-item strong { color: var(--ink); font-weight: 600; }
+  @keyframes ccTickerScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
   .cc-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
   .cc-kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 14px; }
   .cc-kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
@@ -3197,6 +3212,24 @@ function CoffeeCanCountUp({ value, decimals, prefix, suffix }) {
   return <React.Fragment>{prefix || ''}{display.toFixed(decimals || 0)}{suffix || ''}</React.Fragment>;
 }
 
+// Mini-gráfico de línea inline (estilo terminal de trading) — sin Chart.js,
+// puro SVG, para poder mostrar uno por fila en la lista sin crear docenas de
+// instancias de Chart.js (caro en memoria y en renders).
+function CoffeeCanSparkline({ puntos, color }) {
+  if (!puntos || puntos.length < 2) return null;
+  const w = 56, h = 20;
+  const min = Math.min(...puntos);
+  const max = Math.max(...puntos);
+  const rango = (max - min) || 1;
+  const paso = w / (puntos.length - 1);
+  const coords = puntos.map((p, i) => `${(i * paso).toFixed(1)},${(h - ((p - min) / rango) * h).toFixed(1)}`);
+  return (
+    <svg width={w} height={h} style={{ display: 'block', flexShrink: 0 }}>
+      <polyline points={coords.join(' ')} fill="none" stroke={color} strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 // Wrapper genérico de Chart.js — crea/destruye la instancia en cada cambio
 // real de datos, para no acumular canvases fantasma entre renders.
 function CoffeeCanChart({ type, data, options }) {
@@ -3275,6 +3308,7 @@ const GLOSARIO_COFFEECAN_ = [
   { termino: 'Precio de referencia', definicion: 'El precio de la acción el día que pasó a "En seguimiento" (aprobó las 3 fases). Es el punto de partida contra el que se mide si se vuelve un multibagger.' },
   { termino: 'Múltiplo actual', definicion: 'Precio de hoy dividido entre el precio de referencia. Un múltiplo de 2.0x significa que se duplicó desde que empezaste a seguirla.' },
   { termino: 'Estados del pipeline', definicion: 'Candidata nueva (recién detectada por SEC, esperando Finnhub) → Pendiente de ratios (pasó tamaño/deuda, esperando Alpha Vantage) → En seguimiento (pasó las 3 fases, la revisas tú) → Comprado/Descartado (tu decisión final). Descartada-tamaño o Descartada-calidad significan que no pasó algún filtro automático.' },
+  { termino: 'Estancada', definicion: 'Una candidata "En seguimiento" con 90 días o más desde su precio de referencia, cuyo múltiplo actual sigue entre 0.85x y 1.15x (es decir, ni ganó ni perdió más de 15% real). No es un descarte automático — es una señal para que revises manualmente si vale la pena seguir esperando o reconsiderar la tesis.' },
 ];
 
 function CoffeeCanGlosario() {
@@ -3305,6 +3339,15 @@ function CoffeeCanTab() {
   const [busyId, setBusyId] = useState(null);
   const [seccion, setSeccion] = useState('dashboard');
   const [familiasOcultasScatter, setFamiliasOcultasScatter] = useState(() => new Set());
+  const [industriasOcultasComportamiento, setIndustriasOcultasComportamiento] = useState(() => new Set());
+
+  function toggleIndustriaComportamiento(industria) {
+    setIndustriasOcultasComportamiento(prev => {
+      const next = new Set(prev);
+      if (next.has(industria)) next.delete(industria); else next.add(industria);
+      return next;
+    });
+  }
 
   function toggleFamiliaScatter(estado) {
     setFamiliasOcultasScatter(prev => {
@@ -3324,7 +3367,14 @@ function CoffeeCanTab() {
   function volverALista() { setVista('lista'); setCandidataId(null); }
 
   function actualizarCampo(id, campo, valor) {
-    apiCall('update', { sheet: 'Bolsa_Watchlist', data: { id, [campo]: valor } }).then(load);
+    return apiCall('update', { sheet: 'Bolsa_Watchlist', data: { id, [campo]: valor } }).then(load);
+  }
+
+  function decidirRapido(e, id, estado) {
+    e.stopPropagation();
+    if (busyId) return;
+    setBusyId(id);
+    actualizarCampo(id, 'estado', estado).then(() => setBusyId(null));
   }
 
   function borrarCandidata(id) {
@@ -3359,6 +3409,17 @@ function CoffeeCanTab() {
     const solidas = items.filter(i => i.analisis_recomendacion === 'Sólida').length;
     const atractivas = items.filter(i => i.analisis_recomendacion === 'Atractiva con matices').length;
     const vigilar = items.filter(i => i.analisis_recomendacion === 'Vigilar de cerca').length;
+
+    // ── Validación del modelo de reglas: ¿de verdad rinden mejor las
+    // "Sólida" que las "Vigilar de cerca"? Solo se puede juzgar con datos
+    // reales de mercado (múltiplo_actual) — esto se vuelve más confiable
+    // mientras más tiempo pase y más candidatas acumulen historial.
+    const RECOMENDACIONES_ORDEN_VALIDACION_ = ['Sólida', 'Atractiva con matices', 'Vigilar de cerca'];
+    const validacionPorRecomendacion = RECOMENDACIONES_ORDEN_VALIDACION_.map(rec => {
+      const conDato = items.filter(i => i.analisis_recomendacion === rec && i.multiplo_actual !== null && i.multiplo_actual !== undefined);
+      const promedio = conDato.length === 0 ? null : conDato.reduce((s, i) => s + parseFloat(i.multiplo_actual), 0) / conDato.length;
+      return { recomendacion: rec, promedio, n: conDato.length };
+    }).filter(v => v.n > 0);
     const pasoFaseB = items.filter(i => ['pendiente_ratios', 'descartado_calidad', 'en_seguimiento', 'comprado', 'descartado'].includes(i.estado)).length;
     const pasoFaseC = items.filter(i => ['en_seguimiento', 'comprado', 'descartado'].includes(i.estado)).length;
     const decididas = items.filter(i => ['comprado', 'descartado'].includes(i.estado)).length;
@@ -3413,7 +3474,17 @@ function CoffeeCanTab() {
       // rompía la escala del eje X para todas las demás — no aportan nada a
       // "mercado cap vs crecimiento de los candidatos viables", así que se
       // excluyen de este gráfico (siguen completas en la lista/detalle).
-      if (it.estado === 'descartado_tamano') return;
+      //
+      // Este gráfico vive en la pestaña "Filtro Finnhub" — solo debe mostrar
+      // resultados que decide Finnhub (tamaño/deuda), no el destino final que
+      // le dio Alpha Vantage o tú después (en_seguimiento/comprado/descartado
+      // por PEG-ROE). 'descartado_calidad' se separa en dos causas posibles
+      // (deuda alta vía Finnhub, o PEG/ROE vía Alpha Vantage) — solo se
+      // cuenta aquí si NO tiene peg_ratio, es decir, si Alpha Vantage nunca
+      // llegó a tocarla.
+      const esDescartadaPorFinnhub = it.estado === 'pendiente_ratios' || it.estado === 'descartado_sin_datos' ||
+        (it.estado === 'descartado_calidad' && (it.peg_ratio === null || it.peg_ratio === undefined));
+      if (!esDescartadaPorFinnhub) return;
       const mc = parseFloat(it.market_cap);
       const cr = parseFloat(it.crecimiento_ingresos_pct);
       if (!mc || isNaN(cr)) return;
@@ -3468,21 +3539,74 @@ function CoffeeCanTab() {
     // ── Gráfico "Comportamiento en bolsa" (Dashboard) — evolución del
     // múltiplo de cada candidata en_seguimiento/comprado a partir del
     // historial diario que guarda revisarMultibaggers_.
-    const PALETA_LINEAS_COFFEECAN_ = ['#4C7EF3', '#3FCB8C', '#E5A93F', '#E5555A', '#B18CF3', '#3FCBC3', '#F3944C', '#868C9A'];
+    // Un tono (hue) fijo por industria — cada ticker dentro de esa industria
+    // recibe una variación de LUMINOSIDAD del mismo tono, para poder
+    // distinguir acciones individuales sin que la leyenda liste 22 tickers.
+    const HUES_INDUSTRIA_COFFEECAN_ = [217, 152, 38, 355, 271, 175, 24, 300, 60, 190];
+    function colorBaseIndustria_(indice) {
+      const gris = { h: 0, s: 0 };
+      return indice < 0 ? gris : { h: HUES_INDUSTRIA_COFFEECAN_[indice % HUES_INDUSTRIA_COFFEECAN_.length], s: 62 };
+    }
+    function colorTickerIndustria_(h, s, indice, total) {
+      if (total <= 1) return `hsl(${h}, ${s}%, 55%)`;
+      const l = 38 + (indice / (total - 1)) * 34; // 38%-72%, siempre legible en fondo oscuro
+      return `hsl(${h}, ${s}%, ${l}%)`;
+    }
+
     const tickersEnSeguimientoSet = new Set(items.filter(i => ['en_seguimiento', 'comprado'].includes(i.estado)).map(i => i.ticker));
     const historialRelevante = historial.filter(h => tickersEnSeguimientoSet.has(h.ticker));
     const fechasComportamiento = [...new Set(historialRelevante.map(h => h.fecha))].sort();
     const historialPorTicker = {};
     historialRelevante.forEach(h => { (historialPorTicker[h.ticker] = historialPorTicker[h.ticker] || {})[h.fecha] = parseFloat(h.multiplo); });
-    const datasetsComportamiento = Object.keys(historialPorTicker).map((ticker, idx) => ({
-      label: ticker,
-      data: fechasComportamiento.map(f => historialPorTicker[ticker][f] !== undefined ? historialPorTicker[ticker][f] : null),
-      borderColor: PALETA_LINEAS_COFFEECAN_[idx % PALETA_LINEAS_COFFEECAN_.length],
-      backgroundColor: 'transparent',
-      tension: 0.3,
-      pointRadius: 2,
-      spanGaps: true,
-    }));
+
+    const tickerAIndustriaComportamiento = {};
+    items.forEach(i => { if (tickersEnSeguimientoSet.has(i.ticker)) tickerAIndustriaComportamiento[i.ticker] = i.industria || 'Sin industria'; });
+    const industriasComportamiento = [...new Set(Object.values(tickerAIndustriaComportamiento))].sort();
+    const tickersPorIndustriaComportamiento = {};
+    industriasComportamiento.forEach(ind => {
+      tickersPorIndustriaComportamiento[ind] = Object.keys(historialPorTicker).filter(t => tickerAIndustriaComportamiento[t] === ind).sort();
+    });
+
+    const datasetsComportamiento = Object.keys(historialPorTicker)
+      .filter(ticker => !industriasOcultasComportamiento.has(tickerAIndustriaComportamiento[ticker]))
+      .map(ticker => {
+        const industria = tickerAIndustriaComportamiento[ticker];
+        const grupo = tickersPorIndustriaComportamiento[industria];
+        const { h, s } = colorBaseIndustria_(industria === 'Sin industria' ? -1 : industriasComportamiento.indexOf(industria));
+        return {
+          label: ticker,
+          data: fechasComportamiento.map(f => historialPorTicker[ticker][f] !== undefined ? historialPorTicker[ticker][f] : null),
+          borderColor: colorTickerIndustria_(h, s, grupo.indexOf(ticker), grupo.length),
+          backgroundColor: 'transparent',
+          tension: 0.3,
+          pointRadius: 2,
+          spanGaps: true,
+        };
+      });
+
+    // ── Recordatorio del escaneo mensual de SEC EDGAR (corre desde tu PC,
+    // no desde GAS) — se "reprograma" solo: en cuanto detecta candidatas con
+    // fecha_creacion reciente (el próximo escaneo real ya corrió), la alerta
+    // desaparece por sí sola sin que nadie tenga que confirmarla a mano.
+    const fechasCreacionSEC = items.map(i => i.fecha_creacion).filter(Boolean).sort();
+    const fechaUltimoEscaneoSEC = fechasCreacionSEC.length ? fechasCreacionSEC[fechasCreacionSEC.length - 1] : null;
+    const diasDesdeUltimoEscaneoSEC = fechaUltimoEscaneoSEC ? Math.floor((Date.now() - new Date(fechaUltimoEscaneoSEC).getTime()) / 86400000) : null;
+    const proximaFechaEsperadaSEC = fechaUltimoEscaneoSEC ? new Date(new Date(fechaUltimoEscaneoSEC).getTime() + 30 * 86400000).toISOString().slice(0, 10) : null;
+    const alertaSECPendiente = diasDesdeUltimoEscaneoSEC !== null && diasDesdeUltimoEscaneoSEC >= 28;
+
+    // ── Barra de tickers (estilo bolsa) — siempre visible arriba, cualquiera
+    // sea la pestaña activa. Se duplica la lista una vez para poder animar
+    // un scroll infinito con un solo translateX(-50%) en CSS.
+    const tickerBarItems = items.filter(i => ['en_seguimiento', 'comprado'].includes(i.estado) && i.multiplo_actual !== null && i.multiplo_actual !== undefined);
+    const duracionTickerBar = Math.max(18, tickerBarItems.length * 3.5) + 's';
+
+    // Puntos para los sparklines inline de la lista de Seguimiento — mismo
+    // historial diario que alimenta el gráfico "Comportamiento en bolsa".
+    function puntosSparkline_(ticker) {
+      const porFecha = historialPorTicker[ticker];
+      if (!porFecha) return null;
+      return fechasComportamiento.map(f => porFecha[f]).filter(v => v !== undefined);
+    }
 
     return (
       <div>
@@ -3490,6 +3614,19 @@ function CoffeeCanTab() {
         <div className="entry-meta" style={{ marginBottom: 18 }}>
           Candidatas a multibagger encontradas por el pipeline GARP (SEC EDGAR + Finnhub + Alpha Vantage) — filosofía "coffee can": comprar calidad y no tocarla por años.
         </div>
+
+        {tickerBarItems.length > 0 && (
+          <div className="cc-tickerbar">
+            <div className="cc-tickerbar-track" style={{ '--cc-ticker-duration': duracionTickerBar }}>
+              {[...tickerBarItems, ...tickerBarItems].map((it, idx) => (
+                <span key={idx} className="cc-tickerbar-item" onClick={() => abrirDetalle(it.id)} style={{ cursor: 'pointer' }}>
+                  <strong>{it.ticker}</strong>
+                  <span className={it.multiplo_actual >= 1 ? 'cc-up' : 'cc-down'}>{it.multiplo_actual >= 1 ? '▲' : '▼'} {formatNumCoffeeCan_(it.multiplo_actual, 2)}x</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="detail-tabs">
           {SECCIONES_COFFEECAN_.map(s => (
@@ -3535,14 +3672,63 @@ function CoffeeCanTab() {
           </div>
         </div>
 
+        {validacionPorRecomendacion.length > 0 && (
+          <div className="cc-panel" style={{ marginBottom: 16 }}>
+            <div className="stat-card-label" style={{ marginBottom: 4 }}>Validación del modelo — rendimiento real por recomendación</div>
+            <div className="entry-meta" style={{ marginBottom: 12 }}>Múltiplo promedio actual de las candidatas con cada etiqueta. Si "Sólida" no rinde mejor que "Vigilar de cerca" con el tiempo, el puntaje de <code>generarAnalisisReglas_</code> necesita ajuste — entre más candidatas acumulen historial, más confiable es esta comparación.</div>
+            <div className="cc-stats-row" style={{ marginBottom: 0 }}>
+              {validacionPorRecomendacion.map(v => (
+                <div key={v.recomendacion} className="cc-kpi" style={{ borderColor: RECOMENDACION_COLOR_COFFEECAN_[v.recomendacion] + '55' }}>
+                  <div className="cc-kpi-label">{v.recomendacion} (n={v.n})</div>
+                  <div className="cc-kpi-value" style={{ color: RECOMENDACION_COLOR_COFFEECAN_[v.recomendacion] }}>{v.promedio.toFixed(2)}x</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {totalCandidatas > 0 && (
+          <div className="cc-panel" style={{ marginBottom: 16 }}>
+            <div className="stat-card-label" style={{ marginBottom: 12 }}>Embudo del pipeline</div>
+            <div className="cc-chart-wrap">
+              <CoffeeCanFunnel pasos={[
+                { label: 'Detectadas (SEC EDGAR)', valor: totalCandidatas, color: '#868C9A' },
+                { label: 'Pasaron tamaño (Finnhub)', valor: pasoFaseB, color: '#4C7EF3' },
+                { label: 'Pasaron calidad (Alpha Vantage)', valor: pasoFaseC, color: '#3FCB8C' },
+                { label: 'Decididas por ti', valor: decididas, color: '#E5A93F' },
+              ]} />
+            </div>
+          </div>
+        )}
+
         {datasetsComportamiento.length > 0 ? (
           <div className="cc-panel" style={{ marginBottom: 16 }}>
             <div className="stat-card-label" style={{ marginBottom: 12 }}>Comportamiento en bolsa — candidatas en seguimiento (múltiplo vs. precio de referencia)</div>
+            <div className="entry-meta" style={{ marginBottom: 10 }}>Se captura un punto por día (revisarMultibaggers_, trigger diario 8am) — cada color es una industria, cada línea dentro de ese color es una acción distinta.</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+              {industriasComportamiento.map(ind => {
+                const oculta = industriasOcultasComportamiento.has(ind);
+                const { h, s } = colorBaseIndustria_(ind === 'Sin industria' ? -1 : industriasComportamiento.indexOf(ind));
+                const color = `hsl(${h}, ${s}%, 55%)`;
+                return (
+                  <button
+                    key={ind}
+                    className="ghost"
+                    onClick={() => toggleIndustriaComportamiento(ind)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, padding: '5px 12px', opacity: oculta ? 0.4 : 1, borderColor: oculta ? 'var(--line)' : color }}
+                  >
+                    <span style={{ width: 9, height: 9, borderRadius: '50%', background: color, display: 'inline-block' }}></span>
+                    {ind} ({tickersPorIndustriaComportamiento[ind].length})
+                  </button>
+                );
+              })}
+            </div>
             <div className="cc-chart-wrap" style={{ height: 280 }}>
               <CoffeeCanChart
                 type="line"
                 data={{ labels: fechasComportamiento, datasets: datasetsComportamiento }}
                 options={Object.assign({}, opcionesEjesOscuro, {
+                  plugins: { legend: { display: false } },
                   scales: {
                     x: opcionesEjesOscuro.scales.x,
                     y: Object.assign({}, opcionesEjesOscuro.scales.y, { title: { display: true, text: 'Múltiplo (x)', color: '#565C69', font: { family: 'IBM Plex Mono', size: 10 } } }),
@@ -3559,6 +3745,24 @@ function CoffeeCanTab() {
         </>)}
 
         {seccion === 'sec' && (<>
+        {fechaUltimoEscaneoSEC && (
+          <div className="cc-panel" style={{ marginBottom: 16, borderColor: alertaSECPendiente ? '#E5A93F' : 'var(--line)' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <span style={{ fontSize: 20 }}>{alertaSECPendiente ? '⏰' : '✅'}</span>
+              <div>
+                <div style={{ fontWeight: 600, color: alertaSECPendiente ? '#E5A93F' : 'var(--ink)' }}>
+                  {alertaSECPendiente ? 'Toca correr el escaneo mensual de SEC EDGAR' : 'Escaneo de SEC EDGAR al día'}
+                </div>
+                <div className="entry-meta" style={{ marginTop: 4 }}>
+                  Última corrida detectada: {fechaUltimoEscaneoSEC} ({diasDesdeUltimoEscaneoSEC} día{diasDesdeUltimoEscaneoSEC === 1 ? '' : 's'} atrás).{' '}
+                  {alertaSECPendiente
+                    ? 'Corre escanear_sec_local.js desde tu PC (o confirma que la tarea programada de Windows lo hizo) — esta alerta se apaga sola en cuanto detecte candidatas nuevas.'
+                    : 'Próxima corrida esperada alrededor del ' + proximaFechaEsperadaSEC + '.'}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="entry-meta" style={{ marginBottom: 16 }}>
           Fase A — SEC EDGAR (corre mensualmente desde tu PC): identifica empresas con crecimiento interanual de ingresos Y utilidad neta ≥15%, descartando datos atípicos (&gt;1000%, artefacto de una base casi cero el año anterior).
         </div>
@@ -3574,30 +3778,17 @@ function CoffeeCanTab() {
         </div>
 
         {totalCandidatas > 0 && (
-          <div className="cc-charts-grid">
-            <div className="cc-panel">
-              <div className="stat-card-label" style={{ marginBottom: 12 }}>Distribución del crecimiento de ingresos</div>
-              <div className="cc-chart-wrap">
-                <CoffeeCanChart
-                  type="bar"
-                  data={{
-                    labels: bucketsHistograma.map(b => b.label),
-                    datasets: [{ label: 'Candidatas', data: bucketsHistograma.map(b => b.count), backgroundColor: '#4C7EF3', borderRadius: 4, maxBarThickness: 46 }],
-                  }}
-                  options={Object.assign({}, opcionesEjesOscuro, { plugins: Object.assign({}, opcionesEjesOscuro.plugins, { legend: { display: false } }) })}
-                />
-              </div>
-            </div>
-            <div className="cc-panel">
-              <div className="stat-card-label" style={{ marginBottom: 12 }}>Embudo del pipeline</div>
-              <div className="cc-chart-wrap">
-                <CoffeeCanFunnel pasos={[
-                  { label: 'Detectadas (SEC EDGAR)', valor: totalCandidatas, color: '#868C9A' },
-                  { label: 'Pasaron tamaño (Finnhub)', valor: pasoFaseB, color: '#4C7EF3' },
-                  { label: 'Pasaron calidad (Alpha Vantage)', valor: pasoFaseC, color: '#3FCB8C' },
-                  { label: 'Decididas por ti', valor: decididas, color: '#E5A93F' },
-                ]} />
-              </div>
+          <div className="cc-panel">
+            <div className="stat-card-label" style={{ marginBottom: 12 }}>Distribución del crecimiento de ingresos</div>
+            <div className="cc-chart-wrap">
+              <CoffeeCanChart
+                type="bar"
+                data={{
+                  labels: bucketsHistograma.map(b => b.label),
+                  datasets: [{ label: 'Candidatas', data: bucketsHistograma.map(b => b.count), backgroundColor: '#4C7EF3', borderRadius: 4, maxBarThickness: 46 }],
+                }}
+                options={Object.assign({}, opcionesEjesOscuro, { plugins: Object.assign({}, opcionesEjesOscuro.plugins, { legend: { display: false } }) })}
+              />
             </div>
           </div>
         )}
@@ -3683,32 +3874,6 @@ function CoffeeCanTab() {
           </div>
         )}
 
-        {industriasOrdenadas.length > 0 && (
-          <div className="cc-panel" style={{ marginBottom: 16 }}>
-            <div className="stat-card-label" style={{ marginBottom: 12 }}>Concentración por industria (en seguimiento + compradas)</div>
-            <div className="cc-chart-wrap" style={{ height: Math.max(140, industriasOrdenadas.length * 34) }}>
-              <CoffeeCanChart
-                type="bar"
-                data={{
-                  labels: industriasOrdenadas,
-                  datasets: [{ label: 'Candidatas', data: industriasOrdenadas.map(ind => conteoIndustrias[ind]), backgroundColor: '#4C7EF3', borderRadius: 4, maxBarThickness: 22 }],
-                }}
-                options={{
-                  indexAxis: 'y',
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  animation: { duration: 700, easing: 'easeOutCubic' },
-                  plugins: { legend: { display: false } },
-                  scales: {
-                    x: { ticks: { color: '#565C69', font: { family: 'IBM Plex Mono', size: 10 }, stepSize: 1 }, grid: { color: '#262B36' } },
-                    y: { ticks: { color: '#868C9A', font: { family: 'IBM Plex Mono', size: 10.5 } }, grid: { display: false } },
-                  },
-                }}
-              />
-            </div>
-          </div>
-        )}
-
         <div className="cc-panel">
           <div className="stat-card-label" style={{ marginBottom: 10 }}>Últimos movimientos de Finnhub</div>
           {movimientosFinnhub.length === 0 ? <div className="empty">Todavía no hay candidatas procesadas por Finnhub.</div> : movimientosFinnhub.map(m => (
@@ -3748,9 +3913,11 @@ function CoffeeCanTab() {
             </div>
           ))}
         </div>
+        </>)}
 
+        {seccion === 'seguimiento' && (<>
         {estancadas.length > 0 && (
-          <div className="cc-panel" style={{ borderColor: 'var(--ink-faint)' }}>
+          <div className="cc-panel" style={{ marginBottom: 16, borderColor: 'var(--ink-faint)' }}>
             <div className="stat-card-label" style={{ marginBottom: 10 }}>⏸ Estancadas (90+ días sin moverse, ±15% desde referencia)</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {estancadas.map(e => (
@@ -3761,9 +3928,33 @@ function CoffeeCanTab() {
             </div>
           </div>
         )}
-        </>)}
 
-        {seccion === 'seguimiento' && (<>
+        {industriasOrdenadas.length > 0 && (
+          <div className="cc-panel" style={{ marginBottom: 16 }}>
+            <div className="stat-card-label" style={{ marginBottom: 12 }}>Concentración por industria (en seguimiento + compradas)</div>
+            <div className="cc-chart-wrap" style={{ height: Math.max(140, industriasOrdenadas.length * 34) }}>
+              <CoffeeCanChart
+                type="bar"
+                data={{
+                  labels: industriasOrdenadas,
+                  datasets: [{ label: 'Candidatas', data: industriasOrdenadas.map(ind => conteoIndustrias[ind]), backgroundColor: '#4C7EF3', borderRadius: 4, maxBarThickness: 22 }],
+                }}
+                options={{
+                  indexAxis: 'y',
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  animation: { duration: 700, easing: 'easeOutCubic' },
+                  plugins: { legend: { display: false } },
+                  scales: {
+                    x: { ticks: { color: '#565C69', font: { family: 'IBM Plex Mono', size: 10 }, stepSize: 1 }, grid: { color: '#262B36' } },
+                    y: { ticks: { color: '#868C9A', font: { family: 'IBM Plex Mono', size: 10.5 } }, grid: { display: false } },
+                  },
+                }}
+              />
+            </div>
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
           <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
             {multibaggers > 0 && <option value="multibaggers">🏆 Multibaggers ({multibaggers})</option>}
@@ -3805,17 +3996,49 @@ function CoffeeCanTab() {
                 onClick={() => abrirDetalle(it.id)}
               >
                 <div className="entry-main">
-                  <div className="entry-title">
-                    {it.ticker || '(sin ticker)'} {it.nombre_empresa && `· ${it.nombre_empresa}`}
-                    {it.fecha_multibagger && <span className="cc-multibagger-badge" style={{ marginLeft: 8 }}>🏆 {formatNumCoffeeCan_(it.multiplo_actual, 1)}x</span>}
+                  <div className="entry-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                    <span>
+                      {it.ticker || '(sin ticker)'} {it.nombre_empresa && `· ${it.nombre_empresa}`}
+                      {it.fecha_multibagger && <span className="cc-multibagger-badge" style={{ marginLeft: 8 }}>🏆 {formatNumCoffeeCan_(it.multiplo_actual, 1)}x</span>}
+                    </span>
+                    {puntosSparkline_(it.ticker) && puntosSparkline_(it.ticker).length > 1 && (
+                      <CoffeeCanSparkline puntos={puntosSparkline_(it.ticker)} color={it.multiplo_actual >= 1 ? '#3FCB8C' : '#E5555A'} />
+                    )}
                   </div>
                   <div className="entry-meta">
                     {ETIQUETA_ESTADO_COFFEECAN_[it.estado] || it.estado}{it.bolsa ? ' · ' + it.bolsa : ''}{it.industria ? ' · ' + it.industria : ''} · Market cap {formatMoneyCoffeeCan_(it.market_cap)} · Ingresos {formatPctCoffeeCan_(it.crecimiento_ingresos_pct)} · Utilidad {formatPctCoffeeCan_(it.crecimiento_utilidad_pct)}
-                    {it.precio_referencia && <span style={{ color: 'var(--ink-soft)' }}> · ref. ${formatNumCoffeeCan_(it.precio_referencia, 2)}{it.precio_actual ? ' → actual $' + formatNumCoffeeCan_(it.precio_actual, 2) : ''}</span>}
-                    {it.multiplo_actual && !it.fecha_multibagger && <span className="cc-multiplo" style={{ color: 'var(--ink-soft)' }}> ({formatNumCoffeeCan_(it.multiplo_actual, 2)}x)</span>}
+                    {it.precio_referencia && (
+                      <span style={{ color: 'var(--ink-soft)' }}>
+                        {' '}· ref. ${formatNumCoffeeCan_(it.precio_referencia, 2)}
+                        {it.precio_actual && <React.Fragment> → actual $<CoffeeCanCountUp value={it.precio_actual} decimals={2} /></React.Fragment>}
+                      </span>
+                    )}
+                    {it.multiplo_actual && !it.fecha_multibagger && (
+                      <span className={`cc-multiplo ${it.multiplo_actual >= 1 ? 'cc-up' : 'cc-down'}`}>
+                        {' '}{it.multiplo_actual >= 1 ? '▲' : '▼'} <CoffeeCanCountUp value={it.multiplo_actual} decimals={2} suffix="x" />
+                      </span>
+                    )}
                   </div>
                 </div>
-                <div>→</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {it.estado === 'en_seguimiento' && (
+                    <React.Fragment>
+                      <button
+                        className="ghost"
+                        style={{ fontSize: 11, padding: '4px 10px', borderColor: 'var(--green)', color: 'var(--green)' }}
+                        disabled={busyId === it.id}
+                        onClick={(e) => decidirRapido(e, it.id, 'comprado')}
+                      >Comprar</button>
+                      <button
+                        className="ghost"
+                        style={{ fontSize: 11, padding: '4px 10px', borderColor: '#E5555A', color: '#E5555A' }}
+                        disabled={busyId === it.id}
+                        onClick={(e) => decidirRapido(e, it.id, 'descartado')}
+                      >Descartar</button>
+                    </React.Fragment>
+                  )}
+                  <div>→</div>
+                </div>
               </div>
             ))}
           </div>
@@ -3872,7 +4095,9 @@ function CoffeeCanTab() {
             </div>
             <div className="stat-card">
               <div className="stat-card-label">Múltiplo desde referencia</div>
-              <div className="stat-card-value" style={{ color: it.fecha_multibagger ? '#E5A93F' : 'var(--ink)' }}>{formatNumCoffeeCan_(it.multiplo_actual, 2)}x</div>
+              <div className="stat-card-value" style={{ color: it.fecha_multibagger ? '#E5A93F' : (it.multiplo_actual >= 1 ? 'var(--green)' : '#E5555A') }}>
+                {it.multiplo_actual !== null && it.multiplo_actual !== undefined && (it.multiplo_actual >= 1 ? '▲ ' : '▼ ')}{formatNumCoffeeCan_(it.multiplo_actual, 2)}x
+              </div>
               <div className="stat-card-sub">meta multibagger: {UMBRAL_MULTIBAGGER_COFFEECAN_}x</div>
             </div>
           </React.Fragment>
