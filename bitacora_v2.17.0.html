@@ -3521,8 +3521,18 @@ function CoffeeCanTab() {
     // peg_ratio; si no tiene peg_ratio, la descartó Finnhub por deuda.
     const descartadasDeudaFinnhub = items.filter(i => i.estado === 'descartado_calidad' && i.peg_ratio === null).length;
     const sinDatosFinnhub = items.filter(i => i.estado === 'descartado_sin_datos').length;
+    // "Propiedad" de Finnhub = su decisión sigue siendo el estado actual de
+    // la candidata. Antes este feed filtraba solo por "tiene market_cap",
+    // lo que colaba candidatas que Finnhub tocó hace semanas pero que
+    // Alpha Vantage (o tú) ya movió después — aparecían arriba del feed con
+    // la fecha de HOY aunque Finnhub no hizo nada hoy. Ahora se limita a
+    // estados que Finnhub sigue "dueño": pendiente_ratios, descartado_tamano,
+    // descartado_sin_datos, o descartado_calidad SIN peg_ratio (deuda alta,
+    // no PEG/ROE).
+    const esResultadoFinnhub_ = i => i.estado === 'pendiente_ratios' || i.estado === 'descartado_tamano' || i.estado === 'descartado_sin_datos' ||
+      (i.estado === 'descartado_calidad' && (i.peg_ratio === null || i.peg_ratio === undefined));
     const movimientosFinnhub = items
-      .filter(i => i.market_cap !== null && i.market_cap !== undefined)
+      .filter(esResultadoFinnhub_)
       .slice()
       .sort((a, b) => (b.fecha_actualizacion || '').localeCompare(a.fecha_actualizacion || ''))
       .slice(0, 15);
@@ -3701,11 +3711,14 @@ function CoffeeCanTab() {
           </div>
         )}
 
-        {datasetsComportamiento.length > 0 ? (
+        {industriasComportamiento.length > 0 ? (
           <div className="cc-panel" style={{ marginBottom: 16 }}>
             <div className="stat-card-label" style={{ marginBottom: 12 }}>Comportamiento en bolsa — candidatas en seguimiento (múltiplo vs. precio de referencia)</div>
             <div className="entry-meta" style={{ marginBottom: 10 }}>Se captura un punto por día (revisarMultibaggers_, trigger diario 8am) — cada color es una industria, cada línea dentro de ese color es una acción distinta.</div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12, alignItems: 'center' }}>
+              <button className="ghost" style={{ fontSize: 12, padding: '5px 12px' }} onClick={() => setIndustriasOcultasComportamiento(new Set())}>Todas</button>
+              <button className="ghost" style={{ fontSize: 12, padding: '5px 12px' }} onClick={() => setIndustriasOcultasComportamiento(new Set(industriasComportamiento))}>Ninguna</button>
+              <span style={{ width: 1, height: 18, background: 'var(--line)', margin: '0 4px' }}></span>
               {industriasComportamiento.map(ind => {
                 const oculta = industriasOcultasComportamiento.has(ind);
                 const { h, s } = colorBaseIndustria_(ind === 'Sin industria' ? -1 : industriasComportamiento.indexOf(ind));
@@ -3723,19 +3736,23 @@ function CoffeeCanTab() {
                 );
               })}
             </div>
-            <div className="cc-chart-wrap" style={{ height: 280 }}>
-              <CoffeeCanChart
-                type="line"
-                data={{ labels: fechasComportamiento, datasets: datasetsComportamiento }}
-                options={Object.assign({}, opcionesEjesOscuro, {
-                  plugins: { legend: { display: false } },
-                  scales: {
-                    x: opcionesEjesOscuro.scales.x,
-                    y: Object.assign({}, opcionesEjesOscuro.scales.y, { title: { display: true, text: 'Múltiplo (x)', color: '#565C69', font: { family: 'IBM Plex Mono', size: 10 } } }),
-                  },
-                })}
-              />
-            </div>
+            {datasetsComportamiento.length > 0 ? (
+              <div className="cc-chart-wrap" style={{ height: 280 }}>
+                <CoffeeCanChart
+                  type="line"
+                  data={{ labels: fechasComportamiento, datasets: datasetsComportamiento }}
+                  options={Object.assign({}, opcionesEjesOscuro, {
+                    plugins: { legend: { display: false } },
+                    scales: {
+                      x: opcionesEjesOscuro.scales.x,
+                      y: Object.assign({}, opcionesEjesOscuro.scales.y, { title: { display: true, text: 'Múltiplo (x)', color: '#565C69', font: { family: 'IBM Plex Mono', size: 10 } } }),
+                    },
+                  })}
+                />
+              </div>
+            ) : (
+              <div className="empty">Todas las industrias están ocultas — activa alguna arriba para ver su gráfico.</div>
+            )}
           </div>
         ) : (
           <div className="cc-panel" style={{ marginBottom: 16 }}>
