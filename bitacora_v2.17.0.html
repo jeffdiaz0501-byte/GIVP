@@ -3330,6 +3330,10 @@ function CoffeeCanGlosario() {
 function CoffeeCanTab() {
   const [items, setItems] = useState(null);
   const [historial, setHistorial] = useState([]);
+  const [backtest, setBacktest] = useState([]);
+  const [simDeudaMax, setSimDeudaMax] = useState(1.0);
+  const [simPegMax, setSimPegMax] = useState(1.5);
+  const [simRoeMin, setSimRoeMin] = useState(15);
   const [filtroEstado, setFiltroEstado] = useState('en_seguimiento');
   const [ordenarPor, setOrdenarPor] = useState('crecimiento');
   const [filtroIndustria, setFiltroIndustria] = useState('todas');
@@ -3360,6 +3364,7 @@ function CoffeeCanTab() {
   function load() {
     apiCall('list', { sheet: 'Bolsa_Watchlist' }).then(res => setItems(Array.isArray(res) ? res : []));
     apiCall('list', { sheet: 'Bolsa_Watchlist_Historial' }).then(res => setHistorial(Array.isArray(res) ? res : []));
+    apiCall('list', { sheet: 'Bolsa_Backtest' }).then(res => setBacktest(Array.isArray(res) ? res : []));
   }
   useEffect(load, []);
 
@@ -3510,8 +3515,39 @@ function CoffeeCanTab() {
       { key: 'finnhub', label: 'Filtro Finnhub' },
       { key: 'alphavantage', label: 'Filtro Alpha Vantage' },
       { key: 'seguimiento', label: 'Seguimiento' },
+      { key: 'backtest', label: 'Backtest' },
       { key: 'glosario', label: 'Glosario' },
     ];
+
+    // ── Datos para la pestaña "Backtest" — ver backtest_coffeecan.js y
+    // supabase_bolsa_backtest.sql. Reconstruye el pipeline en trimestres
+    // PASADOS con datos históricos reales (XBRL + precios de Yahoo) para
+    // medir, sin esperar años, si los umbrales actuales habrían detectado a
+    // los multibaggers que de verdad ocurrieron.
+    function evaluarBacktest_(filas, deudaMax, pegMax, roeMin) {
+      const pasan = filas.filter(r =>
+        r.market_cap_t0 !== null && r.market_cap_t0 !== undefined && r.market_cap_t0 >= MARKET_CAP_MIN_ && r.market_cap_t0 <= MARKET_CAP_MAX_ &&
+        (r.deuda_patrimonio_t0 === null || r.deuda_patrimonio_t0 === undefined || r.deuda_patrimonio_t0 <= deudaMax) &&
+        (r.peg_aproximado_t0 === null || r.peg_aproximado_t0 === undefined || r.peg_aproximado_t0 <= pegMax) &&
+        (r.roe_pct_t0 === null || r.roe_pct_t0 === undefined || r.roe_pct_t0 >= roeMin)
+      );
+      const multibaggersReales = filas.filter(r => r.es_multibagger_real).length;
+      const detectados = pasan.filter(r => r.es_multibagger_real).length;
+      return {
+        totalCandidatas: filas.length,
+        multibaggersReales,
+        pasaron: pasan.length,
+        detectados,
+        rappel: multibaggersReales ? (detectados / multibaggersReales * 100) : 0,
+        precision: pasan.length ? (detectados / pasan.length * 100) : 0,
+      };
+    }
+    const MARKET_CAP_MIN_ = 50000000, MARKET_CAP_MAX_ = 10000000000; // mismos umbrales de tamaño que AnalisisBolsa.gs
+    const trimestresBacktest = [...new Set(backtest.map(r => r.trimestre_referencia))].sort();
+    const resultadoActualBacktest = evaluarBacktest_(backtest, 1.0, 1.5, 15); // umbrales EN PRODUCCIÓN hoy en AnalisisBolsa.gs
+    const resultadoSimuladoBacktest = evaluarBacktest_(backtest, simDeudaMax, simPegMax, simRoeMin);
+    const porTrimestreBacktest = trimestresBacktest.map(t => ({ trimestre: t, ...evaluarBacktest_(backtest.filter(r => r.trimestre_referencia === t), 1.0, 1.5, 15) }));
+    const scatterBacktest = backtest.filter(r => r.multiplo_real !== null && r.crecimiento_ingresos_pct_t0 !== null && r.crecimiento_ingresos_pct_t0 <= 300);
 
     // ── Datos para la pestaña "Filtro Finnhub" (Fase B) ──────────────────────
     const enColaFinnhub = items.filter(i => i.estado === 'candidato_nuevo').length;
@@ -3643,6 +3679,134 @@ function CoffeeCanTab() {
             <button key={s.key} className={`detail-tab ${seccion === s.key ? 'active' : ''}`} onClick={() => setSeccion(s.key)}>{s.label}</button>
           ))}
         </div>
+
+        {seccion === 'backtest' && (<>
+        <div className="cc-panel" style={{ marginBottom: 16 }}>
+          <div className="stat-card-label" style={{ marginBottom: 8 }}>¿Qué es esto?</div>
+          <div className="entry-meta" style={{ lineHeight: 1.6 }}>
+            En vez de esperar años a que el pipeline en vivo acumule multibaggers reales para saber si los umbrales (tamaño, deuda, PEG, ROE) son buenos, este backtest reconstruye esos mismos filtros aplicados a trimestres <strong>pasados</strong>, usando datos históricos reales (SEC XBRL + precios de Yahoo Finance) — y compara contra el múltiplo real que esas acciones tuvieron desde entonces hasta hoy. No usa Finnhub ni Alpha Vantage (solo dan el valor de HOY) ni toca tu watchlist en vivo.<br /><br />
+            <strong>Rappel</strong> = de todos los multibaggers reales que existieron, ¿qué % habría detectado el pipeline? <strong>Precisión</strong> = de las candidatas que habrían pasado el pipeline, ¿qué % de verdad se volvió multibagger? Un rappel bajo significa que estamos dejando pasar ganadores reales; una precisión baja significa que lo que aprobamos no es mejor que tirar una moneda.
+          </div>
+        </div>
+
+        {backtest.length === 0 ? (
+          <div className="empty">Todavía no hay datos de backtest — corre backtest_coffeecan.js para uno o varios trimestres históricos.</div>
+        ) : (<>
+
+        <div className="cc-stats-row">
+          <div className="cc-kpi">
+            <div className="cc-kpi-label">Candidatas analizadas ({trimestresBacktest.length} trimestre{trimestresBacktest.length === 1 ? '' : 's'})</div>
+            <div className="cc-kpi-value"><CoffeeCanCountUp value={resultadoActualBacktest.totalCandidatas} /></div>
+          </div>
+          <div className="cc-kpi">
+            <div className="cc-kpi-label">Multibaggers reales encontrados</div>
+            <div className="cc-kpi-value" style={{ color: '#E5A93F' }}><CoffeeCanCountUp value={resultadoActualBacktest.multibaggersReales} /></div>
+          </div>
+          <div className="cc-kpi">
+            <div className="cc-kpi-label">Rappel actual (umbrales de hoy)</div>
+            <div className="cc-kpi-value" style={{ color: '#E5555A' }}><CoffeeCanCountUp value={resultadoActualBacktest.rappel} decimals={1} suffix="%" /></div>
+          </div>
+          <div className="cc-kpi">
+            <div className="cc-kpi-label">Precisión actual (umbrales de hoy)</div>
+            <div className="cc-kpi-value"><CoffeeCanCountUp value={resultadoActualBacktest.precision} decimals={1} suffix="%" /></div>
+          </div>
+        </div>
+
+        <div className="cc-panel" style={{ marginBottom: 16 }}>
+          <div className="stat-card-label" style={{ marginBottom: 12 }}>Por trimestre de referencia</div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'IBM Plex Mono', monospace", fontSize: 12.5 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--line)', color: 'var(--ink-faint)', textAlign: 'left' }}>
+                  <th style={{ padding: '6px 10px' }}>Trimestre</th>
+                  <th style={{ padding: '6px 10px' }}>Candidatas</th>
+                  <th style={{ padding: '6px 10px' }}>Multibaggers reales</th>
+                  <th style={{ padding: '6px 10px' }}>Pasaron pipeline</th>
+                  <th style={{ padding: '6px 10px' }}>Rappel</th>
+                  <th style={{ padding: '6px 10px' }}>Precisión</th>
+                </tr>
+              </thead>
+              <tbody>
+                {porTrimestreBacktest.map(r => (
+                  <tr key={r.trimestre} style={{ borderBottom: '1px solid var(--line)' }}>
+                    <td style={{ padding: '6px 10px', fontWeight: 600 }}>{r.trimestre}</td>
+                    <td style={{ padding: '6px 10px' }}>{r.totalCandidatas}</td>
+                    <td style={{ padding: '6px 10px' }}>{r.multibaggersReales}</td>
+                    <td style={{ padding: '6px 10px' }}>{r.pasaron}</td>
+                    <td style={{ padding: '6px 10px', color: r.rappel < 10 ? '#E5555A' : 'var(--green)' }}>{r.rappel.toFixed(1)}%</td>
+                    <td style={{ padding: '6px 10px' }}>{r.precision.toFixed(1)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="cc-panel" style={{ marginBottom: 16 }}>
+          <div className="stat-card-label" style={{ marginBottom: 4 }}>Simulador — ¿qué pasaría si ajustamos los umbrales?</div>
+          <div className="entry-meta" style={{ marginBottom: 14 }}>Mueve los controles para probar otras combinaciones sobre los mismos datos históricos — sin tocar AnalisisBolsa.gs todavía.</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 16 }}>
+            <label style={{ fontSize: 12.5 }}>
+              Deuda/patrimonio máx.: <strong>{simDeudaMax.toFixed(1)}</strong>
+              <input type="range" min="0.2" max="5" step="0.1" value={simDeudaMax} onChange={e => setSimDeudaMax(parseFloat(e.target.value))} style={{ width: '100%' }} />
+            </label>
+            <label style={{ fontSize: 12.5 }}>
+              PEG máx.: <strong>{simPegMax.toFixed(1)}</strong>
+              <input type="range" min="0.5" max="6" step="0.1" value={simPegMax} onChange={e => setSimPegMax(parseFloat(e.target.value))} style={{ width: '100%' }} />
+            </label>
+            <label style={{ fontSize: 12.5 }}>
+              ROE mín.: <strong>{simRoeMin}%</strong>
+              <input type="range" min="-10" max="30" step="1" value={simRoeMin} onChange={e => setSimRoeMin(parseFloat(e.target.value))} style={{ width: '100%' }} />
+            </label>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="cc-panel" style={{ borderColor: 'var(--line)' }}>
+              <div className="stat-card-label" style={{ marginBottom: 8 }}>Hoy en producción (deuda≤1.0, PEG≤1.5, ROE≥15%)</div>
+              <div style={{ display: 'flex', gap: 20 }}>
+                <div><div className="cc-kpi-label">Rappel</div><div className="cc-kpi-value" style={{ fontSize: 20 }}>{resultadoActualBacktest.rappel.toFixed(1)}%</div></div>
+                <div><div className="cc-kpi-label">Precisión</div><div className="cc-kpi-value" style={{ fontSize: 20 }}>{resultadoActualBacktest.precision.toFixed(1)}%</div></div>
+              </div>
+            </div>
+            <div className="cc-panel" style={{ borderColor: 'var(--accent)' }}>
+              <div className="stat-card-label" style={{ marginBottom: 8 }}>Simulado (deuda≤{simDeudaMax.toFixed(1)}, PEG≤{simPegMax.toFixed(1)}, ROE≥{simRoeMin}%)</div>
+              <div style={{ display: 'flex', gap: 20 }}>
+                <div><div className="cc-kpi-label">Rappel</div><div className="cc-kpi-value" style={{ fontSize: 20, color: resultadoSimuladoBacktest.rappel > resultadoActualBacktest.rappel ? 'var(--green)' : 'var(--ink)' }}>{resultadoSimuladoBacktest.rappel.toFixed(1)}%</div></div>
+                <div><div className="cc-kpi-label">Precisión</div><div className="cc-kpi-value" style={{ fontSize: 20, color: resultadoSimuladoBacktest.precision >= resultadoActualBacktest.precision ? 'var(--green)' : '#E5555A' }}>{resultadoSimuladoBacktest.precision.toFixed(1)}%</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {scatterBacktest.length > 0 && (
+          <div className="cc-panel" style={{ marginBottom: 16 }}>
+            <div className="stat-card-label" style={{ marginBottom: 12 }}>Crecimiento en T0 vs. múltiplo real obtenido</div>
+            <div className="entry-meta" style={{ marginBottom: 10 }}>Verde = habría pasado el pipeline actual. Gris = descartada. La línea horizontal marca 2x (multibagger).</div>
+            <div className="cc-chart-wrap" style={{ height: 320 }}>
+              <CoffeeCanChart
+                type="scatter"
+                data={{
+                  datasets: [
+                    { label: 'Pasó el pipeline', data: scatterBacktest.filter(r => r.paso_pipeline_completo).map(r => ({ x: r.crecimiento_ingresos_pct_t0, y: r.multiplo_real, ticker: r.ticker })), backgroundColor: '#3FCB8C', pointRadius: 5, pointHoverRadius: 7 },
+                    { label: 'Descartada', data: scatterBacktest.filter(r => !r.paso_pipeline_completo).map(r => ({ x: r.crecimiento_ingresos_pct_t0, y: r.multiplo_real, ticker: r.ticker })), backgroundColor: 'rgba(134,140,154,0.45)', pointRadius: 3, pointHoverRadius: 6 },
+                  ],
+                }}
+                options={{
+                  responsive: true, maintainAspectRatio: false, animation: { duration: 500 },
+                  plugins: {
+                    legend: { labels: { color: '#868C9A', font: { family: 'IBM Plex Mono', size: 10 } } },
+                    tooltip: { callbacks: { label: ctx => `${ctx.raw.ticker}: +${ctx.raw.x}% -> ${ctx.raw.y}x` } },
+                  },
+                  scales: {
+                    x: { ticks: { color: '#565C69', font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: '#262B36' }, title: { display: true, text: 'Crecimiento de ingresos en T0 (%)', color: '#565C69', font: { family: 'IBM Plex Mono', size: 10 } } },
+                    y: { ticks: { color: '#565C69', font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: '#262B36' }, title: { display: true, text: 'Múltiplo real (x)', color: '#565C69', font: { family: 'IBM Plex Mono', size: 10 } } },
+                  },
+                }}
+              />
+            </div>
+          </div>
+        )}
+        </>)}
+        </>)}
 
         {seccion === 'glosario' && <CoffeeCanGlosario />}
 
