@@ -3288,6 +3288,89 @@ function CoffeeCanPegDial({ peg }) {
   );
 }
 
+// ── Investigación cualitativa de multibaggers reales (sept 2026) ──────────
+// El backtest cuantitativo mostró un rappel muy bajo (~4%) con los umbrales
+// actuales. Para entender POR QUÉ, se investigó (noticias + informes reales,
+// no solo ratios) el catalizador real de 58 multibaggers históricos, en dos
+// rondas: primero tecnología/industrial (28), luego energía, consumo,
+// cripto-minería, materiales y farma (30 más) — para no sesgar el patrón
+// hacia un solo sector.
+const CATEGORIA_COLOR_INVESTIGACION_ = {
+  'Megatendencia tardía (IA/data centers)': '#4C7EF3',
+  'Shock geopolítico/commodity (contemporáneo)': '#3FCB8C',
+  'Shock geopolítico/defensa': '#B18CF3',
+  'Reapertura + buyback (contemporáneo)': '#3FCB8C',
+  'Turnaround gerencial (tardío)': '#F3944C',
+  'Pivote de activos físicos hacia IA': '#4C7EF3',
+  'Commodities — contemporáneo a T0': '#3FCB8C',
+  'Pipeline de producto — contemporáneo a T0': '#3FCB8C',
+  'Idiosincrática (exploración/negocio propio)': '#3FCBC3',
+  'Opcionalidad regulatoria/nuevo negocio': '#E5A93F',
+  'Riesgo de gobernanza (bandera roja)': '#E5555A',
+  'Artefacto de datos (liquidez OTC)': '#868C9A',
+};
+const INVESTIGACION_MULTIBAGGERS_ = [
+  { ticker: 'NVDA', multiplo: 15.95, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'El boom de IA generativa (ChatGPT, nov 2022) llegó ~2.5 años después del T0 (2020Q3) — no existía como tesis en los datos financieros de entonces.' },
+  { ticker: 'MU', multiplo: 18.47, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'Pasó de ser DRAM/NAND commodity a cuello de botella estratégico (HBM) del boom de IA — pivote posterior al T0.' },
+  { ticker: 'AMAT', multiplo: 7.08, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'Recuperación cíclica de equipos de semis, reacelerada por capex de fabricación de chips de IA desde 2024.' },
+  { ticker: 'LRCX', multiplo: 7.62, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'Ciclo boom-bust-boom de memoria NAND/DRAM; el segundo boom (2024-2026) está ligado a infraestructura de IA.' },
+  { ticker: 'FTNT', multiplo: 7.82, categoria: 'Opcionalidad regulatoria/nuevo negocio', detectableT0: true, nota: 'La alianza SASE (con Masergy) ya existía en 2020 — señal visible vía noticias de producto, aunque no vía estados financieros.' },
+  { ticker: 'AXTI', multiplo: 9.77, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'Pivote de narrativa (2024-25) de semis para móviles a sustratos para óptica de data centers de IA.' },
+  { ticker: 'TSSI', multiplo: 13.98, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'Integrador de data centers que firmó contrato ancla con Dell para racks de servidores de IA — ingresos x5 en 2 años.' },
+  { ticker: 'SODI', multiplo: 11.25, categoria: 'Shock geopolítico/defensa', detectableT0: false, nota: 'Semis de potencia para defensa — backlog +101% por aumento de gasto militar tras 2022, shock exógeno no anticipable.' },
+  { ticker: 'DTST', multiplo: 18.13, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'Reinvención corporativa completa: de hosting/cloud a vehículo de inversión en infraestructura GPU — decidido años después.' },
+  { ticker: 'MOD', multiplo: 10.69, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'Adquirió Airedale (cooling) y firmó contrato de $4B con cliente de data centers — M&A posterior al T0.' },
+  { ticker: 'RCMT', multiplo: 9.15, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'Staffing/ingeniería que expandió hacia modernización de red eléctrica y data centers desde 2023.' },
+  { ticker: 'WDC', multiplo: 10.14, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'Demanda de HDDs de alta capacidad para "almacenamiento frío" de data centers de IA, capacidad vendida hasta 2026.' },
+  { ticker: 'STX', multiplo: 7.87, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'Nueva tecnología HAMR calificada por hyperscalers para storage "nearline" de IA — desarrollo posterior al T0.' },
+  { ticker: 'SMCI', multiplo: 8.94, categoria: 'Riesgo de gobernanza (bandera roja)', detectableT0: false, nota: 'Boom real de servidores de IA para GPUs Nvidia, PERO acusaciones de Hindenburg Research (ago 2024) de manipulación contable y renuncia de su auditor E&Y — patrón de gobernanza débil ya visible en su historial desde 2017-2020.' },
+  { ticker: 'WBHC', multiplo: 22.3, categoria: 'Artefacto de datos (liquidez OTC)', detectableT0: false, nota: 'El múltiplo MÁS ALTO de todo el backtest, pero fundamentales de banco regional modestos (crecimiento ~13-15%) — beta de 10 y trading OTC de bajísimo volumen sugieren ruido de precio, no una oportunidad real ejecutable.' },
+  { ticker: 'FIX', multiplo: 18.29, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'Contratista HVAC/mecánico — clientes tech pasaron a >50% de ingresos por construcción de data centers desde 2023.' },
+  { ticker: 'DELL', multiplo: 11.67, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'Re-calificado de "empresa de PCs madura" a jugador de infraestructura de IA — backlog de servidores IA de ~$2.9B a ~$95B.' },
+  { ticker: 'CECO', multiplo: 14.49, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'Control de emisiones/enfriamiento — pedido récord ligado a plantas de gas para alimentar data centers de IA (2024-25).' },
+  { ticker: 'BDCO', multiplo: 15.26, categoria: 'Commodities — contemporáneo a T0', detectableT0: true, nota: 'Márgenes de refinación disparados por la guerra Rusia-Ucrania (feb 2022) — coincide con el propio T0 (Q1 2022), a diferencia de las demás.' },
+  { ticker: 'POWL', multiplo: 19.6, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'Switchgear eléctrico — backlog de $700M a $2.4B por data centers + modernización de red + exportación LNG.' },
+  { ticker: 'IESC', multiplo: 15.89, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'Contratista eléctrico — segmento de construcción dentro de data centers, margen bruto de 18.7% a 24.2%.' },
+  { ticker: 'CRS', multiplo: 9.27, categoria: 'Shock geopolítico/defensa', detectableT0: 'parcial', nota: 'Aeroespacial+Defensa (65% de ventas) — recuperación post-COVID era tesis conocida en 2022, pero el pricing power de superaleaciones no se anticipó.' },
+  { ticker: 'CRDO', multiplo: 10.37, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'Chips de conectividad (cables activos, transceptores) para clusters GPU — adopción directa de hiperescaladores desde 2023.' },
+  { ticker: 'GHM', multiplo: 8.56, categoria: 'Shock geopolítico/defensa', detectableT0: 'parcial', nota: 'Equipos para submarinos nucleares — programa Columbia-class ya conocido en la industria de defensa en 2022, pero nicho, difícil de conectar desde fundamentales genéricos.' },
+  { ticker: 'HOOD', multiplo: 10.87, categoria: 'Opcionalidad regulatoria/nuevo negocio', detectableT0: 'parcial', nota: 'Recuperación de trading retail + eliminación de la regla PDT + nuevos mercados de predicción — opcionalidad no anticipable en 2023.' },
+  { ticker: 'ETON', multiplo: 20.69, categoria: 'Pipeline de producto — contemporáneo a T0', detectableT0: true, nota: 'ÚNICA que SÍ pasó nuestro pipeline actual. Secuencia de aprobaciones NDA (KHINDIVI, DESMODA) + adquisición de Increlex — pipeline de catalizadores regulatorios ya visible en 2023.' },
+  { ticker: 'AGX', multiplo: 9.45, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: 'parcial', nota: 'Construcción de plantas de energía a gas — backlog a ~$3B por demanda eléctrica de data centers de IA desde 2024.' },
+  { ticker: 'VRT', multiplo: 9.09, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: 'parcial', nota: 'Energía/enfriamiento líquido para data centers de IA — backlog de $15B, reconocimiento pleno del mercado llegó en 2024-25.' },
+  // ── Segunda ronda (energía, consumo, ciberseguridad, cripto-minería, materiales, farma) ──
+  { ticker: 'NGL', multiplo: 8.53, categoria: 'Shock geopolítico/commodity (contemporáneo)', detectableT0: true, nota: 'Supercycle midstream de energía — EBITDA de Water Solutions +47%, márgenes altos ya visibles en 2022.' },
+  { ticker: 'TRGP', multiplo: 8.21, categoria: 'Shock geopolítico/commodity (contemporáneo)', detectableT0: true, nota: 'Supercycle midstream NGL + adquisición de $3.55B — precios y volúmenes de commodities ya en alza en 2021.' },
+  { ticker: 'VLO', multiplo: 4.91, categoria: 'Shock geopolítico/commodity (contemporáneo)', detectableT0: true, nota: 'Supercycle de refinación — crack spreads dispararon por la guerra Rusia-Ucrania, noticia de portada en el propio T0.' },
+  { ticker: 'MPC', multiplo: 4.71, categoria: 'Shock geopolítico/commodity (contemporáneo)', detectableT0: true, nota: 'El caso más nítido: crack spread de diésel de $27 a $60-83/barril en el mismo trimestre por la guerra — ~$8B de impacto en márgenes.' },
+  { ticker: 'PARR', multiplo: 5.38, categoria: 'Shock geopolítico/commodity (contemporáneo)', detectableT0: true, nota: 'Supercycle de refinación regional + recompras agresivas de acciones.' },
+  { ticker: 'TEN', multiplo: 5.62, categoria: 'Shock geopolítico/commodity (contemporáneo)', detectableT0: true, nota: 'Tarifas de fletamento de tanqueros dispararon por desvío de rutas comerciales tras la invasión rusa — inmediato al T0.' },
+  { ticker: 'DDS', multiplo: 6.85, categoria: 'Reapertura + buyback (contemporáneo)', detectableT0: 'parcial', nota: 'Recompra de $500M en 2021 + short covering (short interest ~16%) amplificaron la reapertura post-COVID.' },
+  { ticker: 'WSM', multiplo: 4.98, categoria: 'Reapertura + buyback (contemporáneo)', detectableT0: 'parcial', nota: 'Tendencia de gasto en el hogar + recompras de $1,000M — la tendencia ya era visible en T0, se subestimó su persistencia.' },
+  { ticker: 'ANF', multiplo: 4.37, categoria: 'Turnaround gerencial (tardío)', detectableT0: false, nota: 'El múltiplo real llegó 2 años después de T0 por revamping de marca y $1,300M en recompras — no por reapertura inmediata.' },
+  { ticker: 'EAT', multiplo: 6.35, categoria: 'Turnaround gerencial (tardío)', detectableT0: false, nota: 'Nuevo CEO (2022) mejoró same-store sales de Chili\'s ~12%/año — ejecución gerencial específica posterior al T0.' },
+  { ticker: 'COKE', multiplo: 5.01, categoria: 'Reapertura + buyback (contemporáneo)', detectableT0: false, nota: 'Recompra equivalente a ~39% de su propio market cap — el tamaño del buyback fue el factor dominante, no detectable en T0.' },
+  { ticker: 'RCL', multiplo: 4.68, categoria: 'Reapertura + buyback (contemporáneo)', detectableT0: 'parcial', nota: 'Reapertura pura de cruceros — ya en marcha en T0, pero la velocidad de recuperación de márgenes sorprendió.' },
+  { ticker: 'CRWD', multiplo: 6.69, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: 'parcial', nota: 'Crecimiento de ARR ya visible en T0, pero el re-rating llegó después. RIESGO: causó el mayor apagón informático global (jul 2024, ~$5.4B en pérdidas) — cayó 45% y se recuperó en 4 meses.' },
+  { ticker: 'PANW', multiplo: 4.56, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: 'parcial', nota: 'Estrategia de "platformización" (consolidar proveedores) ya anunciada en 2022, efecto en márgenes confirmado después.' },
+  { ticker: 'PLTR', multiplo: 7.58, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'Modelo comercial "AIP Bootcamp" + contratos de defensa — desarrollado después de T0, no visible en Q1 2024.' },
+  { ticker: 'APP', multiplo: 4.8, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: 'parcial', nota: 'Motor publicitario AXON 2.0 ya desplegado en T0, pero la magnitud de la aceleración de márgenes fue posterior.' },
+  { ticker: 'ANET', multiplo: 7.07, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: 'parcial', nota: 'Redes Ethernet para data centers de IA — crecimiento visible en 2022, catalizador de IA confirmado en 2023+.' },
+  { ticker: 'CIFR', multiplo: 5.29, categoria: 'Pivote de activos físicos hacia IA', detectableT0: false, nota: 'Minera de Bitcoin que pivotó a hosting HPC — contratos ancla con Google/Fluidstack y AWS llegaron 18+ meses después del T0.' },
+  { ticker: 'CORZ', multiplo: 4.04, categoria: 'Pivote de activos físicos hacia IA', detectableT0: 'parcial', nota: 'Primer contrato con CoreWeave (16MW) cayó DENTRO del propio T0 (Q1 2024) — el "contrato ancla" de 200MW llegó 3 meses después. Patrón repetido en todo el sector (TeraWulf, Hut 8, Riot, Bitdeer).' },
+  { ticker: 'HL', multiplo: 3.92, categoria: 'Shock geopolítico/commodity (contemporáneo)', detectableT0: 'parcial', nota: 'Casi enteramente beta del precio de la plata (+77% en el período) — tesis "plata infravalorada" ya circulaba en T0.' },
+  { ticker: 'CENX', multiplo: 5, categoria: 'Shock geopolítico/commodity (contemporáneo)', detectableT0: 'parcial', nota: 'Precio del aluminio en máximos por sanciones a Rusia — visible en T0, pero catalizadores específicos (JV, reapertura de planta) posteriores.' },
+  { ticker: 'THMG', multiplo: 6.15, categoria: 'Idiosincrática (exploración/negocio propio)', detectableT0: false, nota: 'Resultados de perforación y actualización de recursos minerales — dependía de eventos de exploración futuros, alta especulación OTC.' },
+  { ticker: 'IDR', multiplo: 5.53, categoria: 'Idiosincrática (exploración/negocio propio)', detectableT0: false, nota: 'Expansión de producción + narrativa de tierras raras "independencia de China" — desarrollada después del T0.' },
+  { ticker: 'LEU', multiplo: 5.51, categoria: 'Shock geopolítico/commodity (contemporáneo)', detectableT0: 'parcial', nota: 'Dependencia de uranio enriquecido ruso expuesta por la guerra — visible en T0; el boost adicional de demanda nuclear para IA fue posterior.' },
+  { ticker: 'USLM', multiplo: 5.06, categoria: 'Idiosincrática (exploración/negocio propio)', detectableT0: 'parcial', nota: 'Demanda de cal/caliza para construcción e industria — crecimiento de T0 ya reflejaba la tendencia que continuó.' },
+  { ticker: 'KNSA', multiplo: 6.23, categoria: 'Pipeline de producto — contemporáneo a T0', detectableT0: true, nota: 'ARCALYST ya aprobado y en rampa comercial ANTES de T0 — caso puro tipo ETON, el crecimiento de T0 reflejaba directamente el catalizador.' },
+  { ticker: 'CORT', multiplo: 4.9, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: 'parcial', nota: 'Resultados positivos del ensayo Fase 3 (relacorilant) llegaron pocos meses DESPUÉS de T0, no estaban en los ingresos de T0.' },
+  { ticker: 'LGND', multiplo: 3.83, categoria: 'Pipeline de producto — contemporáneo a T0', detectableT0: 'parcial', nota: 'Modelo de royalties ya generaba el crecimiento en T0, pero el re-rating por el spin-off de OmniAb fue un evento corporativo posterior.' },
+  { ticker: 'PGEN', multiplo: 4.29, categoria: 'Megatendencia tardía (IA/data centers)', detectableT0: false, nota: 'Aprobación FDA completa de Papzimeos llegó casi 3 años después de T0 — sin datos de eficacia públicos en el momento del filtro.' },
+  { ticker: 'HROW', multiplo: 4.17, categoria: 'Pipeline de producto — contemporáneo a T0', detectableT0: 'parcial', nota: 'Crecimiento fuerte ya presente en T0 (como ETON), pero las aprobaciones específicas (IHEEZO, VEVYE) llegaron después y aceleraron el múltiplo.' },
+];
+
 // Glosario de términos — para no tener que salir a buscar qué significa
 // cada sigla. Panel colapsable, se abre desde el botón "? Glosario" arriba
 // de la lista.
@@ -3331,6 +3414,7 @@ function CoffeeCanTab() {
   const [items, setItems] = useState(null);
   const [historial, setHistorial] = useState([]);
   const [backtest, setBacktest] = useState([]);
+  const [tendencias, setTendencias] = useState([]);
   const [simDeudaMax, setSimDeudaMax] = useState(1.0);
   const [simPegMax, setSimPegMax] = useState(1.5);
   const [simRoeMin, setSimRoeMin] = useState(15);
@@ -3365,6 +3449,7 @@ function CoffeeCanTab() {
     apiCall('list', { sheet: 'Bolsa_Watchlist' }).then(res => setItems(Array.isArray(res) ? res : []));
     apiCall('list', { sheet: 'Bolsa_Watchlist_Historial' }).then(res => setHistorial(Array.isArray(res) ? res : []));
     apiCall('list', { sheet: 'Bolsa_Backtest' }).then(res => setBacktest(Array.isArray(res) ? res : []));
+    apiCall('list', { sheet: 'Bolsa_Tendencias' }).then(res => setTendencias(Array.isArray(res) ? res : []));
   }
   useEffect(load, []);
 
@@ -3516,8 +3601,19 @@ function CoffeeCanTab() {
       { key: 'alphavantage', label: 'Filtro Alpha Vantage' },
       { key: 'seguimiento', label: 'Seguimiento' },
       { key: 'backtest', label: 'Backtest' },
+      { key: 'tendencias', label: 'Tendencias' },
       { key: 'glosario', label: 'Glosario' },
     ];
+
+    // ── Datos para la pestaña "Tendencias" — análisis semanal de noticias
+    // globales (no solo financieras) que hace Claude directamente en sesión
+    // (ver guardar_tendencias.js), no un trigger de GAS. Esta pestaña solo
+    // vigila cuándo fue la última vez, igual que la alerta de SEC EDGAR.
+    const fechasAnalisisTendencias = tendencias.map(t => t.fecha_analisis).filter(Boolean).sort();
+    const fechaUltimoAnalisisTendencias = fechasAnalisisTendencias.length ? fechasAnalisisTendencias[fechasAnalisisTendencias.length - 1] : null;
+    const diasDesdeUltimoAnalisisTendencias = fechaUltimoAnalisisTendencias ? Math.floor((Date.now() - new Date(fechaUltimoAnalisisTendencias).getTime()) / 86400000) : null;
+    const alertaTendenciasPendiente = diasDesdeUltimoAnalisisTendencias === null || diasDesdeUltimoAnalisisTendencias >= 8;
+    const temasActivosOrdenados = tendencias.slice().sort((a, b) => (b.fecha_analisis || '').localeCompare(a.fecha_analisis || '') || (b.semanas_consecutivas || 0) - (a.semanas_consecutivas || 0));
 
     // ── Datos para la pestaña "Backtest" — ver backtest_coffeecan.js y
     // supabase_bolsa_backtest.sql. Reconstruye el pipeline en trimestres
@@ -3805,7 +3901,112 @@ function CoffeeCanTab() {
             </div>
           </div>
         )}
+
+        <div className="cc-panel" style={{ marginBottom: 16, borderColor: '#4C7EF3' }}>
+          <div className="stat-card-label" style={{ marginBottom: 4 }}>🔎 Investigación cualitativa (sept 2026) — ¿por qué el rappel es tan bajo?</div>
+          <div className="entry-meta" style={{ lineHeight: 1.6, marginBottom: 14 }}>
+            Investigamos con noticias/informes reales (no solo ratios) el catalizador detrás de <strong style={{ color: 'var(--ink)' }}>58</strong> de los mejores multibaggers históricos del backtest, en dos rondas — primero tecnología/industrial, luego energía, consumo, cripto-minería, materiales y farma, para no sesgar el patrón hacia un solo sector. Hallazgos centrales:
+            <br /><br />
+            <strong style={{ color: 'var(--ink)' }}>~45% (26 de 58) fueron "megatendencia tardía"</strong> — sobre todo el boom de infraestructura de IA/data centers que arrancó recién en 2023, 2-4 años después de que sus datos financieros pasaran por nuestro filtro. En esos casos, ningún filtro basado en fundamentales de esa época podía haberlos detectado.
+            <br /><br />
+            <strong style={{ color: '#3FCB8C' }}>~9 casos (energía + parte de minería) sí tuvieron un catalizador CONTEMPORÁNEO a T0</strong> — el supercycle de energía 2021-2022 (guerra Rusia-Ucrania restringiendo oferta) era noticia de portada en el mismo trimestre del filtro. Estos probablemente fueron excluidos por deuda alta (típica de refinerías/MLPs), no porque el catalizador fuera invisible — aquí sí hay margen de mejora real.
+            <br /><br />
+            <strong style={{ color: '#F3944C' }}>Un patrón nuevo: "pivote de activos físicos hacia IA"</strong> — mineras de Bitcoin (CIFR, CORZ) que pivotaron a alquilar su infraestructura de energía/cómputo para hosting de IA, repetido en todo el sector (TeraWulf, Hut 8, Riot, Bitdeer). Y en consumo, un sub-patrón de <strong>recompras masivas de acciones (buybacks)</strong> como amplificador mecánico del múltiplo (COKE recompró ~39% de su propio market cap).
+            <br /><br />
+            De las 58, solo <strong style={{ color: '#3FCB8C' }}>ETON</strong> y <strong style={{ color: '#3FCB8C' }}>KNSA</strong> son casos "puros" de fundamentales (pipeline de aprobaciones ya visible en T0) — y ETON es, justamente, la única que sí pasó nuestro pipeline actual. <strong style={{ color: '#E5555A' }}>SMCI</strong> y <strong style={{ color: '#E5555A' }}>CRWD</strong> tuvieron múltiplos reales fuertes pero con banderas rojas serias (manipulación contable; el mayor apagón informático global de la historia) que un filtro cuantitativo no habría visto. <strong style={{ color: 'var(--ink-soft)' }}>WBHC</strong> (el múltiplo más alto de todo el backtest, 22.3x) parece ser ruido de datos de un ticker OTC de bajísima liquidez.
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'IBM Plex Mono', monospace", fontSize: 12 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--line)', color: 'var(--ink-faint)', textAlign: 'left' }}>
+                  <th style={{ padding: '6px 8px' }}>Ticker</th>
+                  <th style={{ padding: '6px 8px' }}>Múltiplo</th>
+                  <th style={{ padding: '6px 8px' }}>Categoría del catalizador</th>
+                  <th style={{ padding: '6px 8px' }}>¿Detectable en T0?</th>
+                  <th style={{ padding: '6px 8px' }}>Nota</th>
+                </tr>
+              </thead>
+              <tbody>
+                {INVESTIGACION_MULTIBAGGERS_.slice().sort((a, b) => b.multiplo - a.multiplo).map(r => (
+                  <tr key={r.ticker} style={{ borderBottom: '1px solid var(--line)', verticalAlign: 'top' }}>
+                    <td style={{ padding: '6px 8px', fontWeight: 600 }}>{r.ticker}</td>
+                    <td style={{ padding: '6px 8px' }}>{r.multiplo}x</td>
+                    <td style={{ padding: '6px 8px' }}>
+                      <span style={{ color: CATEGORIA_COLOR_INVESTIGACION_[r.categoria] || 'var(--ink-soft)' }}>{r.categoria}</span>
+                    </td>
+                    <td style={{ padding: '6px 8px' }}>{r.detectableT0 === true ? '✅ Sí' : r.detectableT0 === 'parcial' ? '◐ Parcial' : '❌ No'}</td>
+                    <td style={{ padding: '6px 8px', color: 'var(--ink-soft)', maxWidth: 420, textTransform: 'none', letterSpacing: 0 }}>{r.nota}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="cc-panel" style={{ marginBottom: 16 }}>
+          <div className="stat-card-label" style={{ marginBottom: 10 }}>Conclusiones y recomendaciones</div>
+          <div className="entry-meta" style={{ lineHeight: 1.7 }}>
+            1. <strong style={{ color: 'var(--ink)' }}>El rappel bajo no significa que el filtro esté "roto"</strong> — buena parte de los multibaggers reales dependían de una megatendencia (IA/data centers) que no existía en T0. Ningún screening cuantitativo puede anticipar un catalizador que todavía no ocurrió.
+            <br /><br />
+            2. <strong style={{ color: 'var(--ink)' }}>El umbral de ROE≥15% sigue siendo el más problemático</strong> (confirmado tanto en el simulador cuantitativo como aquí): varias de estas empresas (TSSI, MOD, RCMT) mostraban el crecimiento en ingresos/backlog ANTES de que su ROE alcanzara 15% — exigir rentabilidad madura de entrada las descarta sistemáticamente.
+            <br /><br />
+            3. <strong style={{ color: 'var(--ink)' }}>El crecimiento de "backlog" (cartera de pedidos) apareció como señal temprana común</strong> en varios casos (POWL, IESC, FIX, AGX) — antes de reflejarse en los ingresos reportados. No es un dato que XBRL estandarice, pero vale la pena vigilarlo manualmente en las candidatas de sectores industriales/infraestructura.
+            <br /><br />
+            4. <strong style={{ color: 'var(--ink)' }}>Agregar un filtro de liquidez mínima</strong> (volumen promedio diario) para excluir casos como WBHC, que inflan artificialmente los resultados del backtest sin ser oportunidades reales ejecutables.
+            <br /><br />
+            5. <strong style={{ color: 'var(--ink)' }}>Considerar una bandera de riesgo de gobernanza</strong> (cambios de auditor, restatements, investigaciones) — SMCI y CRWD muestran que un múltiplo real fuerte puede coexistir con problemas serios de transparencia o eventos de riesgo de cola.
+            <br /><br />
+            6. <strong style={{ color: 'var(--ink)' }}>El umbral de deuda/patrimonio ≤1.0 probablemente excluye todo un sector rentable por diseño</strong> — energía/refinerías/MLPs (NGL, TRGP, VLO, MPC, PARR, TEN) operan estructuralmente apalancadas y las 6 tuvieron catalizadores contemporáneos y detectables (supercycle de energía 2021-2022). A diferencia de la "megatendencia tardía", este es un caso donde SÍ vale la pena relajar el umbral.
+            <br /><br />
+            7. <strong style={{ color: 'var(--ink)' }}>Nuevo patrón a vigilar: "pivote de activos físicos hacia IA"</strong> — empresas con energía/infraestructura de cómputo ya construida y subutilizada (mineras de Bitcoin, operadores de plantas de generación) que pivotan a hosting de IA. El cuello de botella real de la industria de IA es la energía, no el capital — cualquier empresa con contratos de energía baratos ya asegurados es candidata de "opcionalidad oculta".
+            <br /><br />
+            8. <strong style={{ color: 'var(--ink)' }}>En consumo/retail, vigilar recompras de acciones (buybacks) grandes relativas al market cap</strong> — actúan como amplificador mecánico del múltiplo (EPS) independiente de la tesis de negocio, y no están en los ratios de crecimiento/ROE que ya usamos.
+          </div>
+        </div>
         </>)}
+        </>)}
+
+        {seccion === 'tendencias' && (<>
+        <div className="cc-panel" style={{ marginBottom: 16, borderColor: alertaTendenciasPendiente ? '#E5A93F' : 'var(--line)' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <span style={{ fontSize: 20 }}>{alertaTendenciasPendiente ? '⏰' : '✅'}</span>
+            <div>
+              <div style={{ fontWeight: 600, color: alertaTendenciasPendiente ? '#E5A93F' : 'var(--ink)' }}>
+                {alertaTendenciasPendiente ? 'Toca hacer el análisis semanal de tendencias' : 'Análisis de tendencias al día'}
+              </div>
+              <div className="entry-meta" style={{ marginTop: 4 }}>
+                {fechaUltimoAnalisisTendencias
+                  ? 'Último análisis: ' + fechaUltimoAnalisisTendencias + ' (' + diasDesdeUltimoAnalisisTendencias + ' día' + (diasDesdeUltimoAnalisisTendencias === 1 ? '' : 's') + ' atrás).'
+                  : 'Todavía no se ha corrido ningún análisis de tendencias.'}
+                {' '}{alertaTendenciasPendiente
+                  ? 'Pide "haz el análisis semanal de tendencias" en una sesión de Claude Code — investiga noticias globales (no solo finanzas) y guarda los hallazgos con guardar_tendencias.js. Esta alerta se apaga sola en cuanto haya un análisis nuevo.'
+                  : 'Próximo análisis esperado en unos días.'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {temasActivosOrdenados.length === 0 ? (
+          <div className="empty">Todavía no hay temas registrados — corre el primer análisis semanal.</div>
+        ) : (
+          <div className="log">
+            {temasActivosOrdenados.map(t => (
+              <div key={t.id} className="entry cc-entry" style={{ borderLeftColor: '#4C7EF3' }}>
+                <div className="entry-main">
+                  <div className="entry-title">
+                    🔥 {t.tema}
+                    {t.semanas_consecutivas > 1 && <span className="cc-multibagger-badge" style={{ marginLeft: 8, background: 'rgba(76,126,243,0.15)', color: '#4C7EF3' }}>{t.semanas_consecutivas} semanas seguidas</span>}
+                  </div>
+                  <div className="entry-meta">
+                    {t.fecha_analisis} {t.industrias_relacionadas && '· ' + t.industrias_relacionadas}
+                  </div>
+                  {t.resumen && <div className="entry-meta" style={{ marginTop: 6, textTransform: 'none', letterSpacing: 0 }}>{t.resumen}</div>}
+                  {t.fuentes && <div className="entry-meta" style={{ marginTop: 4, color: 'var(--ink-faint)' }}>{t.fuentes}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         </>)}
 
         {seccion === 'glosario' && <CoffeeCanGlosario />}
@@ -3843,6 +4044,23 @@ function CoffeeCanTab() {
           <div className="cc-kpi">
             <div className="cc-kpi-label">Recomendación: Vigilar</div>
             <div className="cc-kpi-value" style={{ color: RECOMENDACION_COLOR_COFFEECAN_['Vigilar de cerca'] }}><CoffeeCanCountUp value={vigilar} /></div>
+          </div>
+        </div>
+
+        <div className="cc-panel" style={{ marginBottom: 16, borderColor: alertaTendenciasPendiente ? '#E5A93F' : 'var(--line)', cursor: 'pointer' }} onClick={() => setSeccion('tendencias')}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 18 }}>{alertaTendenciasPendiente ? '⏰' : '🔥'}</span>
+              <div>
+                <div className="stat-card-label" style={{ marginBottom: 2 }}>Tendencias emergentes</div>
+                <div className="entry-meta">
+                  {alertaTendenciasPendiente
+                    ? 'Toca hacer el análisis semanal — ' + (fechaUltimoAnalisisTendencias ? 'último hace ' + diasDesdeUltimoAnalisisTendencias + ' días' : 'nunca se ha corrido')
+                    : temasActivosOrdenados.slice(0, 3).map(t => t.tema).join(' · ') || 'Sin temas registrados todavía'}
+                </div>
+              </div>
+            </div>
+            <span style={{ color: 'var(--ink-faint)', fontSize: 12 }}>Ver todas →</span>
           </div>
         </div>
 
