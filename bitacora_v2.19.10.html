@@ -420,6 +420,17 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbzyiNpF_5-LtQllyu5D_o78
 // es decir, cuando el comportamiento real del precio lo justifica.
 // Requiere Bolsa_Watchlist v8 (supabase_bolsa_watchlist_v8.sql).
 //
+// v2.19.10 — 17 sept 2026: el fix de v2.19.9 (modo nativo "dataset" de
+// Chart.js) cambió el síntoma pero no arregló el bug — ahora solo la línea
+// más arriba quedaba visible, el resto desaparecía. La causa real:
+// CoffeeCanChart destruía y recreaba TODA la instancia de Chart.js en
+// cualquier cambio de datos — corregido de raíz (crea una sola vez, usa
+// chart.update() para cambios posteriores). Con eso arreglado, se restauró
+// el resalte controlado por estado (línea gruesa + al frente, demás
+// atenuadas) que había en v2.19.7 — ahora es seguro, ya no dispara una
+// recreación completa en cada movimiento de mouse. Afecta a los 6 gráficos
+// que usan CoffeeCanChart, no solo Comportamiento en bolsa.
+//
 // v2.19.9 — 17 sept 2026: bug real reportado por Jeff — el hover del
 // gráfico "Comportamiento en bolsa" (v2.19.7) se comportaba erráticamente.
 // Causa: el resalte de línea dependía de tickerHoverComportamiento, que
@@ -587,7 +598,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbzyiNpF_5-LtQllyu5D_o78
 // cualitativa de 58 multibaggers reales); pestaña Tendencias nueva
 // (Bolsa_Tendencias — análisis semanal de noticias globales, cruce
 // automático con las industrias de tus candidatas).
-const FRONTEND_VERSION = 'v2.19.9';
+const FRONTEND_VERSION = 'v2.19.10';
 
 const CATEGORIAS_TAREAS = ['Trabajo', 'Personal', 'Hogar', 'Salud', 'Finanzas', 'Ocio', 'Estudio', 'Otro'];
 
@@ -3341,8 +3352,8 @@ const UMBRAL_INTERES_TENDENCIA_ = 1.2;
 // Mismos umbrales que PUNTAJE_SOLIDA_MIN_/PUNTAJE_ATRACTIVA_MIN_ en
 // AnalisisBolsa.gs (v0.19) — solo para colorear el puntaje en el frontend,
 // el cálculo real vive en el backend.
-const PUNTAJE_SOLIDA_MIN_COFFEECAN_ = 55;
-const PUNTAJE_ATRACTIVA_MIN_COFFEECAN_ = 40;
+const PUNTAJE_SOLIDA_MIN_COFFEECAN_ = 50;
+const PUNTAJE_ATRACTIVA_MIN_COFFEECAN_ = 45;
 const RECOMENDACION_COLOR_COFFEECAN_ = {
   'Sólida': '#3FCB8C',
   'Atractiva con matices': '#E5A93F',
@@ -3417,15 +3428,33 @@ function CoffeeCanSparkline({ puntos, color }) {
 
 // Wrapper genérico de Chart.js — crea/destruye la instancia en cada cambio
 // real de datos, para no acumular canvases fantasma entre renders.
+// v2.19.10 — bug real: la instancia de Chart.js se destruía y se creaba de
+// nuevo en CUALQUIER cambio de `data`/`options` (vía `firma`). Para el
+// gráfico "Comportamiento en bolsa", cuyo resalte de hover necesita
+// recalcular `datasetsComportamiento` en cada movimiento de cursor, esto
+// significaba recrear el gráfico varias veces por segundo — Chart.js no
+// tolera bien que lo destruyan desde dentro de su propio manejador de
+// eventos de mouse, lo que causaba el comportamiento errático reportado
+// (y, en el intento de arreglo anterior con modo "dataset" nativo, un
+// nuevo síntoma: solo una línea quedaba visible). Ahora la instancia se
+// crea UNA sola vez (solo se recrea si cambia `type`, el tipo de gráfico) y
+// los cambios de datos/opciones se aplican con `chart.update()` sobre la
+// instancia existente — el patrón correcto y estable de Chart.js para
+// datos que cambian seguido.
 function CoffeeCanChart({ type, data, options }) {
   const canvasRef = useRef(null);
   const chartRef = useRef(null);
-  const firma = JSON.stringify({ type, data, options });
   useEffect(() => {
     if (!canvasRef.current || typeof Chart === 'undefined') return;
     chartRef.current = new Chart(canvasRef.current, { type, data, options });
-    return () => { if (chartRef.current) chartRef.current.destroy(); };
-  }, [firma]);
+    return () => { if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; } };
+  }, [type]);
+  useEffect(() => {
+    if (!chartRef.current) return;
+    chartRef.current.data = data;
+    chartRef.current.options = options;
+    chartRef.current.update();
+  }, [JSON.stringify(data), JSON.stringify(options)]);
   return <canvas ref={canvasRef}></canvas>;
 }
 
@@ -4028,38 +4057,39 @@ function CoffeeCanTab() {
       tickersBaseComportamiento = extremosComportamiento === 'mejores' ? conMultiplo.slice(0, 10) : conMultiplo.slice(-10);
     }
 
-    // v2.19.9 — bug real reportado por Jeff: el resalte de hover ANTES hacía
-    // que datasetsComportamiento cambiara con cada movimiento de cursor
-    // (borderWidth/color/orden dependían de tickerHoverComportamiento), y
-    // como CoffeeCanChart destruye y recrea toda la instancia de Chart.js
-    // cada vez que cambian los datos, esto destruía/recreaba el gráfico
-    // DENTRO de su propio evento de mouse — causaba el comportamiento
-    // errático ("se bugea") que reportó. Ahora el resalte de la LÍNEA usa
-    // el mecanismo nativo de Chart.js (hoverBorderWidth + interaction
-    // "dataset", ver options más abajo) que NO requiere estado de React ni
-    // recrear nada — Chart.js lo maneja internamente en cada frame. El
-    // estado tickerHoverComportamiento se sigue usando, pero SOLO para
-    // resaltar el tag de industria (fuera del gráfico), así que ya no
-    // afecta a datasetsComportamiento en absoluto.
+    // v2.19.10 — la causa real del bug de hover no era el resalte
+    // controlado por estado en sí, era que CoffeeCanChart destruía y
+    // recreaba toda la instancia de Chart.js en cada cambio de datos (ver
+    // el fix en CoffeeCanChart más arriba, que ahora usa chart.update() en
+    // vez de destruir/recrear). El intento anterior de resolverlo con el
+    // modo nativo "dataset" de Chart.js causó un síntoma distinto (solo una
+    // línea quedaba visible). Con CoffeeCanChart ya corregido de raíz,
+    // vuelve el resalte controlado por estado (más predecible y fácil de
+    // verificar): la línea bajo el cursor queda gruesa y al frente, las
+    // demás se atenúan — ahora es seguro porque ya no dispara una
+    // recreación completa del gráfico en cada movimiento de mouse.
     const datasetsComportamiento = tickersBaseComportamiento
       .filter(ticker => !industriasOcultasComportamiento.has(tickerAIndustriaComportamiento[ticker]))
       .map(ticker => {
         const industria = tickerAIndustriaComportamiento[ticker];
         const grupo = tickersPorIndustriaComportamiento[industria];
         const { h, s } = colorBaseIndustria_(industria === 'Sin industria' ? -1 : industriasComportamiento.indexOf(industria));
+        const colorBase = colorTickerIndustria_(h, s, grupo.indexOf(ticker), grupo.length);
+        const atenuada = tickerHoverComportamiento && tickerHoverComportamiento !== ticker;
         return {
           label: ticker,
           data: fechasComportamiento.map(f => historialPorTicker[ticker][f] !== undefined ? historialPorTicker[ticker][f] : null),
-          borderColor: colorTickerIndustria_(h, s, grupo.indexOf(ticker), grupo.length),
+          borderColor: atenuada ? colorBase.replace('hsl(', 'hsla(').replace(')', ', 0.15)') : colorBase,
           backgroundColor: 'transparent',
           tension: 0.3,
           pointRadius: 2,
           pointHoverRadius: 4,
-          borderWidth: 1.5,
-          hoverBorderWidth: 4,
+          borderWidth: ticker === tickerHoverComportamiento ? 3 : 1.5,
           spanGaps: true,
         };
-      });
+      })
+      // La línea resaltada se dibuja AL FINAL (encima de las demás).
+      .sort((a, b) => (a.label === tickerHoverComportamiento ? 1 : 0) - (b.label === tickerHoverComportamiento ? 1 : 0));
 
     // ── Recordatorio del escaneo mensual de SEC EDGAR (corre desde tu PC,
     // no desde GAS) — se "reprograma" solo: en cuanto detecta candidatas con
@@ -4460,7 +4490,7 @@ function CoffeeCanTab() {
             </div>
           )}
           <div className="cc-kpi" style={{ borderColor: '#E5A93F55' }}>
-            <div className="cc-kpi-label">Revisión prioritaria (puntaje≥40)</div>
+            <div className="cc-kpi-label">Revisión prioritaria (puntaje≥45)</div>
             <div className="cc-kpi-value" style={{ color: '#E5A93F' }}><CoffeeCanCountUp value={conBuenPuntaje} /></div>
           </div>
           <div className="cc-kpi" style={{ borderColor: '#4C7EF355' }}>
@@ -4555,7 +4585,7 @@ function CoffeeCanTab() {
                 style={{ fontSize: 12, padding: '5px 12px', borderColor: soloPrioritariasComportamiento ? '#E5A93F' : 'var(--line)', color: soloPrioritariasComportamiento ? '#E5A93F' : 'var(--ink-soft)' }}
                 onClick={() => setSoloPrioritariasComportamiento(!soloPrioritariasComportamiento)}
               >
-                {soloPrioritariasComportamiento ? `⭐ Solo prioritarias (puntaje≥40) — ${candidatasComportamiento.length}` : `Mostrando todas — ${candidatasComportamiento.length}`}
+                {soloPrioritariasComportamiento ? `⭐ Solo prioritarias (puntaje≥45) — ${candidatasComportamiento.length}` : `Mostrando todas — ${candidatasComportamiento.length}`}
               </button>
               <span className="entry-meta" style={{ textTransform: 'none', letterSpacing: 0 }}>{soloPrioritariasComportamiento ? 'clic para ver las ' + candidatasEnSeguimientoTodas.length + ' en seguimiento' : 'clic para volver a solo prioritarias'}</span>
               <span style={{ width: 1, height: 18, background: 'var(--line)', margin: '0 4px' }}></span>
@@ -4611,17 +4641,18 @@ function CoffeeCanTab() {
                       x: opcionesEjesOscuro.scales.x,
                       y: Object.assign({}, opcionesEjesOscuro.scales.y, { title: { display: true, text: 'Múltiplo (x)', color: '#565C69', font: { family: 'IBM Plex Mono', size: 10 } } }),
                     },
-                    // interaction "dataset": Chart.js resalta SOLO (nativo,
-                    // sin estado de React ni recrear la instancia) la línea
-                    // completa más cercana al cursor, aplicando
-                    // hoverBorderWidth — mucho más fácil de usar con
-                    // ~50-150 líneas finas que exigir caer justo en un punto.
-                    interaction: { mode: 'dataset', intersect: false, axis: 'x' },
+                    // interaction 'nearest' + intersect:false: reacciona a
+                    // la línea más cercana al cursor en el eje X, no exige
+                    // caer justo sobre un punto — más fácil con ~50-150
+                    // líneas finas. (v2.19.10: se probó 'dataset' antes,
+                    // causaba que solo una línea quedara visible — 'nearest'
+                    // es más predecible.)
+                    interaction: { mode: 'nearest', intersect: false, axis: 'x' },
                     onHover: (evento, elementos) => {
-                      // Este estado YA NO alimenta datasetsComportamiento
-                      // (ver más arriba) — solo resalta el tag de industria
-                      // correspondiente, así que cambiarlo es barato (no
-                      // recrea el gráfico).
+                      // Alimenta tanto el resalte de la línea (datasetsComportamiento,
+                      // ver más arriba) como el del tag de industria — ahora
+                      // es seguro porque CoffeeCanChart actualiza con
+                      // chart.update() en vez de recrear la instancia.
                       const ticker = elementos.length > 0 ? datasetsComportamiento[elementos[0].datasetIndex].label : null;
                       setTickerHoverComportamiento(prev => (prev === ticker ? prev : ticker));
                     },
